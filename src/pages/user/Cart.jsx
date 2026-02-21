@@ -1,31 +1,26 @@
 import React, { useState, useEffect, useContext, useRef } from 'react'
 import { AuthContext } from "../../context/AuthProvider";
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { IndianRupee } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { IndianRupee, ShoppingCart, ShieldCheck, Truck, ArrowRight, ChevronDown, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { ChevronDown } from 'lucide-react';
 import AddToCart from '../../components/AddToCart';
 import DeleteFromCart from '../../components/DeleteFromCart';
 
-
-const quantity = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const quantityOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 function Cart() {
-
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const ref = useRef(null);
 
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [addToCartQuantity, setAddToCartQuantity] = useState(1);
 
   async function getCart() {
     try {
-
-      const toastId = toast.loading("Fetching Cart...");
-
       const response = await fetch(`${process.env.REACT_APP_API_URL}/cart`, {
         method: "GET",
         headers: {
@@ -34,24 +29,21 @@ function Cart() {
         credentials: "include",
       });
 
-      toast.dismiss(toastId);
-
       const data = await response.json();
 
       if (!response.ok) {
-        console.log("Error in get cart");
         toast.error(data.message || "Failed to fetch cart");
         return;
       }
 
       if (data.cart) {
         setCart(data.cart);
-        console.log("Cart fetched successfully", data.cart);
       }
-
     } catch (error) {
-      console.log("Error: in get cart", error);
+      console.error("Error fetching cart:", error);
       toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -69,7 +61,6 @@ function Cart() {
   };
 
   const handleDeleteCartItems = async (productId) => {
-
     setCart((prevCart) => {
       const newCart = { ...prevCart };
       const index = newCart.products.findIndex((p) => p.productId._id === productId);
@@ -84,119 +75,226 @@ function Cart() {
     if (!user) {
       navigate('/login');
     }
-  }, [user]);
+  }, [user, navigate]);
 
   useEffect(() => {
-    getCart();
+    if (user) {
+      getCart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!user) {
-    return <div>Loading...</div>
+    return null;
   }
 
   return (
-    <div className='mt-24'>
-      <div className='flex border m-10 justify-center items-center gap-10'>
-        <div className='flex flex-col w-7/12 border-r justify-center p-10'>
-          <div className='my-10'>
-            <h1 className='items-start text-2xl font-light'>
-              Shoping Cart
-            </h1>
-          </div>
-          {cart?.products?.length > 0 ? (
-            <div className='flex flex-col gap-5'>
-              {cart?.products?.map((product, index) => (
-                <div key={product._id} className='rounded-lg p-2 flex flex-row w-full border justify-between'>
-                  <div key={product._id} className='flex flex-1 gap-5 p-2'>
-                    <div className=''>
-                      <img className="h-40 w-32 object-cover object-center rounded-lg" width={100} height={100} src={product?.productId?.image} alt="category" />
-                    </div>
-                    <div className='flex flex-col gap-3'>
-                      <div>
-                        <h1 className='text-xl capitalize'>{product.productId.name}</h1>
-                      </div>
-                      <div className='flex gap-1'>
-                        <IndianRupee className='h-4 w-4 mt-1' />
-                        <h1 className='text-base capitalize'>{product.price}</h1>
-                      </div>
-                      <div className='flex gap-3 justify-center items-center'>
-                        <div className="">Quantity : </div>
-                        <div className=" font-thin">
-                          <Dialog>
-                            <DialogTrigger>
-                              <Button variant="outline" type='button' className="flex gap-2" onClick={() => setAddToCartQuantity(product.quantity)}>
-                                {product.quantity}
-                                <ChevronDown className='h-4 w-4' />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-[300px]">
-                              <DialogHeader>
-                                <DialogTitle>Select Quantity</DialogTitle>
-                              </DialogHeader>
-                              <DialogDescription>
-                                Select the quantity of the product
-                              </DialogDescription>
-                              <div className='flex flex-col gap-5'>
-                                <div className='flex justify-center items-center flex-row flex-wrap gap-1'>
-                                  {
-                                    quantity.map((q) => (
-                                      <Button
-                                        variant="outline"
-                                        key={q}
-                                        onClick={() => {
-                                          setAddToCartQuantity(q);
-                                        }}
-                                        className={`rounded-full text-xs ${addToCartQuantity === q ? 'bg-yellow-500 text-white' : ''}`}>
-                                        {q}
-                                      </Button>
-                                    ))
-                                  }
-                                </div>
+    <div className='md:mt-16 mt-32 min-h-screen bg-gray-50/50'>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-yellow-500/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
 
-                                <AddToCart
-                                  product={product.productId}
-                                  quantity={addToCartQuantity}
-                                  ATC={false}
-                                  handleChangeCartItems={handleChangeCartItems}
-                                >
-                                  <Button className="bg-yellow-600 hover:bg-yellow-500">
-                                    Done : {addToCartQuantity}
-                                  </Button>
-                                </AddToCart>
-                              </div>
-                              <DialogClose asChild className="hidden">
-                                <Button type="button" variant="secondary" ref={ref}>
-                                  Close
-                                </Button>
-                              </DialogClose>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className='p-0 m-0'>
-                    <DeleteFromCart 
-                    productId={product.productId} 
-                    handleDeleteCartItems={handleDeleteCartItems}/>
-                  </div>
-                </div>
-              ))}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 md:py-20">
+          <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <span className="text-gray-600">/</span>
+            <span className="text-yellow-400 font-medium">Shopping Cart</span>
+          </nav>
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+              <ShoppingCart className="h-7 w-7 text-white" />
             </div>
-          ) : (
-            <div className='flex justify-center items-center'>No items in cart</div>
-          )}
-        </div>
-        <div className='flex flex-col justify-center items-center w-5/12'>
-          <div>
-            <h1> totalAmount : {cart.totalAmount}</h1>
-          </div>
-          <div>
-            <h1> totalItems :  {cart.totalItems}</h1>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Shopping Cart</h1>
+              <p className="text-gray-400 mt-1">
+                {loading
+                  ? "Loading..."
+                  : cart?.products?.length > 0
+                    ? `${cart.products.length} item${cart.products.length !== 1 ? 's' : ''} in your cart`
+                    : "Your cart is empty"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
+      <div className='max-w-7xl mx-auto px-6 py-8'>
+        {/* Loading */}
+        {loading && (
+          <div className="flex justify-center py-20">
+            <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        {/* Cart with items */}
+        {!loading && cart?.products?.length > 0 && (
+          <div className='flex flex-col lg:flex-row gap-8'>
+            {/* Left - Cart Items */}
+            <div className='flex-1'>
+              <div className='flex flex-col gap-4'>
+                {cart.products.map((item, i) => (
+                  <div key={item._id} className={`rounded-2xl border border-gray-100 p-5 flex flex-row w-full justify-between bg-white shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in-up animation-delay-${(i % 4) * 100}`}>
+                    <div className='flex flex-1 gap-5'>
+                      <div className="relative group">
+                        <img
+                          className="h-32 w-28 object-cover object-center rounded-xl cursor-pointer group-hover:opacity-80 transition-opacity"
+                          width={100} height={100}
+                          src={item?.productId?.image}
+                          alt={item?.productId?.name || "product"}
+                          onClick={() => navigate(`/product/${item?.productId?._id}`)}
+                        />
+                      </div>
+                      <div className='flex flex-col justify-between py-1'>
+                        <div>
+                          <h3
+                            className='text-base font-semibold capitalize cursor-pointer hover:text-yellow-700 transition-colors leading-tight'
+                            onClick={() => navigate(`/product/${item?.productId?._id}`)}
+                          >
+                            {item.productId?.name}
+                          </h3>
+                          <p className="text-xs text-gray-400 mt-1 capitalize">{item.productId?.category?.name || ""}</p>
+                        </div>
+                        <div className='flex items-center gap-1'>
+                          <IndianRupee className='h-4 w-4 text-gray-900' />
+                          <span className='text-lg font-bold text-gray-900'>{item.price?.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className='flex flex-col items-end justify-between'>
+                      <DeleteFromCart
+                        productId={item.productId}
+                        handleDeleteCartItems={handleDeleteCartItems}
+                      />
+                      <Dialog>
+                        <DialogTrigger>
+                          <button
+                            className="flex items-center gap-2 h-9 px-4 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-yellow-400 hover:text-yellow-700 transition-all"
+                            onClick={() => setAddToCartQuantity(item.quantity)}
+                          >
+                            Qty: {item.quantity}
+                            <ChevronDown className='h-3 w-3' />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[320px] rounded-2xl">
+                          <DialogHeader>
+                            <DialogTitle className="text-lg font-bold">Select Quantity</DialogTitle>
+                          </DialogHeader>
+                          <DialogDescription>
+                            Choose the desired quantity
+                          </DialogDescription>
+                          <div className='flex flex-col gap-5'>
+                            <div className='flex justify-center items-center flex-row flex-wrap gap-2'>
+                              {quantityOptions.map((q) => (
+                                <button
+                                  key={q}
+                                  onClick={() => setAddToCartQuantity(q)}
+                                  className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all duration-200 ${addToCartQuantity === q
+                                      ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
+                                      : 'bg-white text-gray-600 border-gray-200 hover:border-yellow-400'
+                                    }`}
+                                >
+                                  {q}
+                                </button>
+                              ))}
+                            </div>
+
+                            <AddToCart
+                              product={item.productId}
+                              quantity={addToCartQuantity}
+                              ATC={false}
+                              handleChangeCartItems={handleChangeCartItems}
+                            >
+                              <button className="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-md shadow-yellow-500/20">
+                                Confirm: {addToCartQuantity}
+                              </button>
+                            </AddToCart>
+                          </div>
+                          <DialogClose asChild className="hidden">
+                            <Button type="button" variant="secondary" ref={ref}>
+                              Close
+                            </Button>
+                          </DialogClose>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right - Order Summary */}
+            <div className='lg:w-96'>
+              <div className='rounded-2xl border border-gray-100 p-6 bg-white shadow-sm sticky top-28'>
+                <h2 className='text-lg font-bold text-gray-900 mb-5'>Order Summary</h2>
+
+                <div className='space-y-3'>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Subtotal ({cart.totalItems} {cart.totalItems === 1 ? 'item' : 'items'})</span>
+                    <div className="flex items-center font-medium">
+                      <IndianRupee className="h-3.5 w-3.5" />
+                      <span>{cart.totalAmount?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Delivery</span>
+                    <span className="text-green-600 font-semibold">FREE</span>
+                  </div>
+                  <div className="border-t border-dashed border-gray-200 my-3" />
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <div className="flex items-center">
+                      <IndianRupee className="h-4 w-4" />
+                      <span>{cart.totalAmount?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  className="w-full mt-6 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 flex items-center justify-center gap-2 text-base"
+                  onClick={() => navigate('/checkout')}
+                >
+                  Proceed to Checkout
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+
+                {/* Trust badges */}
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  {[
+                    { icon: ShieldCheck, text: "Secure Payment", color: "text-green-500" },
+                    { icon: Truck, text: "Free Delivery", color: "text-yellow-600" },
+                    { icon: RotateCcw, text: "Easy Returns", color: "text-blue-500" },
+                    { icon: ShoppingCart, text: "Best Prices", color: "text-purple-500" },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-gray-500">
+                      <item.icon className={`h-4 w-4 ${item.color}`} />
+                      <span>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && (!cart?.products || cart.products.length === 0) && (
+          <div className='flex flex-col items-center justify-center py-20'>
+            <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gray-100 flex items-center justify-center">
+              <ShoppingCart className="h-10 w-10 text-gray-300" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-700 mb-2">Your cart is empty</h2>
+            <p className="text-gray-400 text-sm mb-8 max-w-sm text-center">Looks like you haven't added anything to your cart yet. Explore our products and find something you love.</p>
+            <button
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold px-8 py-3.5 rounded-full transition-all duration-300 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 hover:scale-105"
+              onClick={() => navigate('/products')}
+            >
+              Browse Products
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

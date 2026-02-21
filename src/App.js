@@ -16,6 +16,14 @@ import UserAddress from "./pages/user/UserAddress";
 import CategoryProducts from "./pages/user/CategoryProducts";
 import ProductDetail from "./pages/user/ProductDetail";
 import Cart from "./pages/user/Cart";
+import Checkout from "./pages/user/Checkout";
+import OrderConfirmation from "./pages/user/OrderConfirmation";
+import MyOrders from "./pages/user/MyOrders";
+import OrderHistory from "./pages/user/OrderHistory";
+import ChangePassword from "./pages/user/ChangePassword";
+import AllProducts from "./pages/user/AllProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import NotFound from "./pages/user/NotFound";
 
 const router = createBrowserRouter([
   {
@@ -36,7 +44,7 @@ const router = createBrowserRouter([
       },
       {
         path: "profile",
-        element: < Profile />,
+        element: <Profile />,
         children: [
           {
             path: '',
@@ -44,7 +52,19 @@ const router = createBrowserRouter([
           },
           {
             path: 'addresses',
-            element: < UserAddress />
+            element: <UserAddress />
+          },
+          {
+            path: 'orders',
+            element: <MyOrders />
+          },
+          {
+            path: 'order-history',
+            element: <OrderHistory />
+          },
+          {
+            path: 'change-password',
+            element: <ChangePassword />
           }
         ],
       },
@@ -63,6 +83,26 @@ const router = createBrowserRouter([
       {
         path: "checkout/cart",
         element: <Cart />
+      },
+      {
+        path: "checkout",
+        element: <Checkout />
+      },
+      {
+        path: "order-confirmation",
+        element: <OrderConfirmation />
+      },
+      {
+        path: "admin/orders",
+        element: <AdminOrders />
+      },
+      {
+        path: "products",
+        element: <AllProducts />
+      },
+      {
+        path: "*",
+        element: <NotFound />
       }
     ],
   },

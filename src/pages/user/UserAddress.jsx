@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { AuthContext } from "../../context/AuthProvider";
 import { toast } from 'sonner';
-import { MapPinnedIcon } from 'lucide-react';
-import { Plus } from 'lucide-react';
+import { MapPinnedIcon, Plus, Phone, Home } from 'lucide-react';
 import {
     Dialog,
     DialogTrigger,
@@ -14,22 +13,14 @@ function UserAddress() {
 
     const { user } = useContext(AuthContext);
     const [addresses, setAddresses] = useState([]);
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
-
         const getAddress = async () => {
+            if (loaded) return;
 
             try {
-
-                if (addresses.lengh > 0) {
-                    toast.message('addresses already fetched');
-                    return;
-                }
-
-                const toastId = toast.loading('getting addresses...');
-
                 const response = await fetch(`${process.env.REACT_APP_API_URL}/user/get-address`, {
-
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -37,31 +28,26 @@ function UserAddress() {
                     credentials: 'include',
                 });
 
-                toast.dismiss(toastId);
-
                 const data = await response.json();
 
                 if (!response.ok) {
-                    toast.error(data.message);
+                    toast.error(data.message || "Failed to load addresses");
                     return;
                 }
 
                 if (data.address) {
-                    console.log(data.address);
-                    // toast.success(data.message);
                     setAddresses(data.address);
                 }
-
             } catch (e) {
                 console.log("Error: in get address", e);
-                toast.error("Error in getting address");
+                toast.error("Error loading addresses");
+            } finally {
+                setLoaded(true);
             }
-
         }
 
         getAddress();
-
-    }, [user, addresses.lengh]);
+    }, [loaded]);
 
     const handleAddAddress = (address) => {
         setAddresses([...addresses, address]);
@@ -78,48 +64,71 @@ function UserAddress() {
     }
 
     return (
-        <div className='py-2 px-4 flex justify-center flex-col'>
-            <div className='flex gap-5 justify-center items-center my-2'>
-                < MapPinnedIcon size={30} className='rounded-full' />
-                <h1 className='text-3xl'>Your Addresses</h1>
-            </div>
-            <div className='m-10 flex gap-6 justify-start flex-wrap'>
-                <div>
-                    <Dialog>
-                        <DialogTrigger>
-                            <div className='w-72 h-60 border-2 border-dashed cursor-pointer flex flex-col justify-center items-center'>
-                                <Plus size={50} className='m-5 text-slate-300' />
-                                <h3 className='text-lg text-slate-600'>Add Address</h3>
-                            </div>
-                        </DialogTrigger>
-                        <AddAdress handleAddAddress={handleAddAddress} />
-                    </Dialog>
+        <div className='py-6 px-4 md:px-8'>
+            {/* Header */}
+            <div className='flex items-center gap-3 mb-8'>
+                <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <MapPinnedIcon size={24} className='text-yellow-700' />
                 </div>
-
-                {
-                    addresses.map((address) => (
-                        <div key={address._id} className='w-72 h-60 border-2 flex flex-col justify-between'>
-                            <div className='m-5'>
-                                <h3 className='font-semibold'>{address.fullName || user.firstName}</h3>
-                                <div className='text-sm'>
-                                    {address?.houseNo && <p> Home No. {address.houseNo}</p>}
-                                    {address?.area && <p>{address.area}</p>}
-                                    <>
-                                        {address?.city && <span>{address.city}</span>},
-                                        {address?.state && <span> {address.state}</span>},
-                                        {address?.pinCode && <span> {address.pinCode}</span>}
-                                    </>
-                                    {address?.country && <p>{address.country}</p>}
-                                    {address?.phone && <p>phone number : {address.phone || user.phone}</p>}
-                                </div>
-                            </div>
-                            <DeleteUpdateAddress address={address} handleUpdateAddress={handleUpdateAddress} handleDeleteAddress={handleDeleteAddress} />
-                        </div>
-                    )
-                    )
-                }
+                <div>
+                    <h1 className='text-2xl font-bold'>Your Addresses</h1>
+                    <p className='text-sm text-gray-500'>Manage your delivery addresses</p>
+                </div>
             </div>
-        </div >
+
+            {/* Address Grid */}
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
+                {/* Add Address Card */}
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <div className='min-h-[220px] border-2 border-dashed border-gray-300 rounded-xl cursor-pointer flex flex-col justify-center items-center hover:border-yellow-500 hover:bg-yellow-50/50 transition-all duration-300 group'>
+                            <div className="h-14 w-14 rounded-full bg-gray-100 group-hover:bg-yellow-100 flex items-center justify-center mb-3 transition-colors">
+                                <Plus size={28} className='text-gray-400 group-hover:text-yellow-600 transition-colors' />
+                            </div>
+                            <h3 className='text-base font-medium text-gray-600 group-hover:text-yellow-700 transition-colors'>Add New Address</h3>
+                        </div>
+                    </DialogTrigger>
+                    <AddAdress handleAddAddress={handleAddAddress} />
+                </Dialog>
+
+                {/* Address Cards */}
+                {addresses.map((address) => (
+                    <div key={address._id} className='min-h-[220px] border rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden'>
+                        <div className='p-5'>
+                            <h3 className='font-semibold text-base mb-2'>{address.fullName || user.firstName}</h3>
+                            <div className='text-sm text-gray-600 space-y-1'>
+                                {address.houseNo && (
+                                    <div className="flex items-start gap-2">
+                                        <Home className="h-3.5 w-3.5 mt-0.5 text-gray-400 flex-shrink-0" />
+                                        <span>{address.houseNo}</span>
+                                    </div>
+                                )}
+                                {address.area && <p className="pl-5.5">{address.area}</p>}
+                                <p className="pl-5.5">
+                                    {[address.city, address.state, address.pinCode].filter(Boolean).join(", ")}
+                                </p>
+                                {address.country && <p className="pl-5.5 text-gray-400 text-xs">{address.country}</p>}
+                                {address.phone && (
+                                    <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                                        <Phone className="h-3.5 w-3.5 text-gray-400" />
+                                        <span>{address.phone}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <DeleteUpdateAddress address={address} handleUpdateAddress={handleUpdateAddress} handleDeleteAddress={handleDeleteAddress} />
+                    </div>
+                ))}
+            </div>
+
+            {/* Empty State */}
+            {loaded && addresses.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                    <MapPinnedIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <p>No addresses saved yet. Add one above!</p>
+                </div>
+            )}
+        </div>
     )
 }
 

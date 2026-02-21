@@ -24,7 +24,6 @@ function AuthProvider({ children }) {
                 }
             } catch (e) {
                 console.log("Error: in check user", e);
-                console.log(e);
             } finally {
                 setLoading(false);
             }
@@ -34,7 +33,14 @@ function AuthProvider({ children }) {
     }, [])
 
     if (loading) {
-        return <div>Loading...</div>
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-gray-500 text-sm">Loading...</p>
+                </div>
+            </div>
+        );
     }
 
     return (

@@ -7,9 +7,7 @@ function AddToCart(props) {
     const { product, quantity, ATC, handleChangeCartItems } = props;
 
     const addToCart = async () => {
-
         try {
-
             const toastId = toast.loading("Adding to cart...");
             const response = await fetch(`${process.env.REACT_APP_API_URL}/cart`, {
                 method: "POST",
@@ -28,24 +26,20 @@ function AddToCart(props) {
             const data = await response.json();
 
             if (!response.ok) {
-                console.log("Error in add to cart");
                 toast.error(data.message || "Failed to add to cart");
                 return;
             }
+
             if (data.cart) {
                 toast.success(data.message || "Product added to cart");
-                console.log("Cart fetched successfully", data.cart);
-                if (!ATC) {
+                if (!ATC && handleChangeCartItems) {
                     handleChangeCartItems(product, quantity);
                 }
             }
-
         } catch (error) {
-            console.log("Error: in add to cart", error);
+            console.error("Error adding to cart:", error);
             toast.error("Something went wrong");
         }
-
-        console.log("Product added to cart", product);
     }
 
     return (

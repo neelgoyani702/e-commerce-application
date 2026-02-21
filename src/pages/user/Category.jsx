@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import CategoryCard from '../../components/CategoryCard.jsx';
-import categoryImage from '../../images/ecommerce-2140603_1920.jpg';
 import {
     Select,
     SelectContent,
@@ -9,17 +8,19 @@ import {
     SelectLabel,
     SelectTrigger,
     SelectValue,
-} from "../../components/ui/select"
+} from "../../components/ui/select";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { LayoutGrid, ArrowUpDown, Search } from "lucide-react";
 
 function Category() {
-    const [category, setCategory] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [sort, setSort] = useState("name-asc");
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
 
     async function getCategory() {
         try {
-            const toastId = toast.loading("Fetching categories...");
             const response = await fetch(
                 `${process.env.REACT_APP_API_URL}/category/get-category`,
                 {
@@ -30,20 +31,18 @@ function Category() {
                     credentials: "include",
                 }
             );
-            toast.dismiss(toastId);
             const data = await response.json();
-            console.log(data.categories);
 
             if (response.ok) {
-                setCategory(data.categories.sort((a, b) => a.name.localeCompare(b.name)));
-                toast.success(data.message || "Categories fetched successfully");
+                setCategories(data.categories.sort((a, b) => a.name.localeCompare(b.name)));
             } else {
-                console.log("Error in getcategory");
                 toast.error(data.message || "Failed to fetch categories");
             }
         } catch (error) {
-            console.log("Error: in getcategory", error);
-            toast.error("something went wrong");
+            console.error("Error fetching categories:", error);
+            toast.error("Something went wrong");
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -54,63 +53,113 @@ function Category() {
     const handleValueChange = (value) => {
         setSort(value);
         if (value === "name-asc") {
-            setCategory([...category].sort((a, b) => a.name.localeCompare(b.name)));
+            setCategories([...categories].sort((a, b) => a.name.localeCompare(b.name)));
         } else if (value === "name-des") {
-            setCategory([...category].sort((a, b) => b.name.localeCompare(a.name)));
+            setCategories([...categories].sort((a, b) => b.name.localeCompare(a.name)));
         }
     }
 
+    const filteredCategories = categories.filter(cat =>
+        cat.name.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
-        <>
-            <div className="py-24 mx-5">
-                <div className="h-96 relative w-full overflow-hidden bg-none bg-cover bg-center hover:scale-105 duration-500">
-                    <div className="absolute w-full -top-[30%]">
-                        <img
-                            src={categoryImage}
-                            alt="category"
-                            className="block"
-                        />
+        <div className="md:mt-16 mt-32 min-h-screen bg-gray-50/50">
+            {/* Hero Section */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+                {/* Decorative */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-72 h-72 bg-yellow-500/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
+
+                <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 md:py-20">
+                    <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+                        <Link to="/" className="hover:text-white transition-colors">Home</Link>
+                        <span className="text-gray-600">/</span>
+                        <span className="text-yellow-400 font-medium">Categories</span>
+                    </nav>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+                                <LayoutGrid className="h-7 w-7 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">All Categories</h1>
+                                <p className="text-gray-400 mt-1">
+                                    Browse {categories.length > 0 ? `${categories.length} categories` : "our collection"}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Hero Search */}
+                        <div className="relative max-w-sm w-full">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search categories..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/30 focus:border-yellow-500/50 transition-all"
+                            />
+                        </div>
                     </div>
-                    <div className=" h-96 w-full flex relative flex-wrap justify-center items-center font-[Caveat] font-extrabold text-7xl text-slate-700 hover:scale-125 duration-500">
-                        <h2 className="p-5">Categories</h2>
+                </div>
+            </div>
+
+            {/* Controls */}
+            <div className="max-w-7xl mx-auto px-6 py-8">
+                <div className="flex items-center justify-between mb-8">
+                    <p className="text-gray-400 text-sm font-medium">
+                        {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'} found
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                        <Select value={sort} onValueChange={handleValueChange}>
+                            <SelectTrigger className="w-[180px] rounded-xl border-gray-200 bg-white">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Sort by</SelectLabel>
+                                    <SelectItem value="name-asc">Name: A → Z</SelectItem>
+                                    <SelectItem value="name-des">Name: Z → A</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
-                <div className="my-14 mx-10">
-                    <div className="my-10">
-                        <div className=" p-2 my-2 font-thin">
-                            <p className="">Filter Categories : </p>
-                        </div>
-                        <hr className="" />
-                        <div className=" p-2 my-2 font-thin">
-                            <Select value={sort} onValueChange={handleValueChange}>
-                                <SelectTrigger className="w-[180px] hover:cursor-pointer">
-                                    <SelectValue placeholder="" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectLabel>Sorting</SelectLabel>
-                                        <SelectItem value="name-asc">name ascending</SelectItem>
-                                        <SelectItem value="name-des">name descending</SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                {/* Loading */}
+                {loading && (
+                    <div className="flex justify-center py-20">
+                        <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
+                )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4  gap-5 my-10">
-                        {category.map((category) => (
-                            <Link to={`/category/${category._id}/products`} key={category._id}>
-                                <CategoryCard key={category._id} category
-                                    ={category} />
+                {/* Categories Grid */}
+                {!loading && filteredCategories.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-12">
+                        {filteredCategories.map((cat, i) => (
+                            <Link to={`/category/${cat._id}/products`} key={cat._id} className={`animate-fade-in-up animation-delay-${(i % 4) * 100}`}>
+                                <CategoryCard category={cat} />
                             </Link>
                         ))}
-
                     </div>
-                </div>
+                )}
 
+                {/* Empty State */}
+                {!loading && filteredCategories.length === 0 && (
+                    <div className="text-center py-20">
+                        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
+                            <LayoutGrid className="h-8 w-8 text-gray-300" />
+                        </div>
+                        <p className="text-gray-500 text-lg font-medium mb-1">No categories found</p>
+                        <p className="text-gray-400 text-sm">
+                            {search ? "Try a different search term" : "Categories will appear here once added"}
+                        </p>
+                    </div>
+                )}
             </div>
-        </>
+        </div>
     )
 }
 

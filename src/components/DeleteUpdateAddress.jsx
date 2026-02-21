@@ -5,6 +5,7 @@ import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { toast } from 'sonner'
 import { AuthContext } from '../context/AuthProvider'
+import { Pencil, Trash2 } from 'lucide-react'
 
 function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress }) {
 
@@ -30,12 +31,12 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
 
         if (!editedAddress.fullName) {
             if (user.firstName) {
-                editedAddress({
-                    ...address,
+                setEditedAddress({
+                    ...editedAddress,
                     fullName: `${user.firstName} ${user.lastName}`
                 });
             } else {
-                toast.message('full name is required as it is not provided in your profile as well');
+                toast.error('Full name is required');
                 return;
             }
         }
@@ -43,32 +44,27 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
         if (!editedAddress.phone) {
             if (user.phone) {
                 setEditedAddress({
-                    ...address,
+                    ...editedAddress,
                     phone: user.phone
                 });
             } else {
-                toast.message('phone number is required as it is not provided in your profile as well');
+                toast.error('Phone number is required');
                 return;
             }
         }
 
         if (editedAddress.phone && !/^[0-9]{10}$/.test(editedAddress.phone)) {
-            toast.message('invalid phone number', {
-                description: 'phone number should be 10 digits long and contains only numbers',
-            })
+            toast.error('Phone number should be 10 digits');
             return;
         }
 
         if (address.fullName === editedAddress.fullName && address.phone === editedAddress.phone && address.houseNo === editedAddress.houseNo && address.landmark === editedAddress.landmark && address.area === editedAddress.area && address.city === editedAddress.city && address.state === editedAddress.state && address.country === editedAddress.country && address.pinCode === pinCode) {
-            toast.message('no changes', {
-                description: 'no changes made to the address',
-            })
+            toast.info('No changes detected');
             return;
         }
 
         try {
-
-            const toastId = toast.loading('editing address...');
+            const toastId = toast.loading('Updating address...');
             const response = await fetch(`${process.env.REACT_APP_API_URL}/user/update-address/${address._id}`, {
                 method: 'PUT',
                 headers: {
@@ -82,20 +78,17 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
             const data = await response.json();
 
             if (!response.ok) {
-                toast.error(data.message);
+                toast.error(data.message || "Update failed");
                 return;
             }
-            else {
-                handleUpdateAddress(data.address);
-                toast.success(data.message);
-                ref.current.click();
-            }
 
+            handleUpdateAddress(data.address);
+            toast.success(data.message || "Address updated!");
+            ref.current.click();
         } catch (error) {
             console.log("error while updating address", error);
-            toast.error("something went wrong");
+            toast.error("Something went wrong");
         }
-
     }
 
     const handleChange = (e) => {
@@ -106,13 +99,11 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
     }
 
     const handlePinCodeChange = async (e) => {
-        console.log(e.target.value);
         setPinCode(e.target.value);
         try {
             const response = await fetch(`https://api.postalpincode.in/pincode/${e.target.value}`);
             if (response.ok) {
                 const data = await response.json();
-                console.log(data);
                 if (data[0]?.PostOffice?.length > 0) {
                     setEditedAddress({
                         ...editedAddress,
@@ -130,15 +121,12 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
         } catch (error) {
             console.log("error in fetching city", error);
         }
-
     }
 
     // Delete address
-    const haldleDelete = async (e) => {
-
+    const handleDelete = async () => {
         try {
-
-            const toastId = toast.loading('deleting address...');
+            const toastId = toast.loading('Deleting address...');
             const response = await fetch(`${process.env.REACT_APP_API_URL}/user/delete-address/${address._id}`, {
                 method: 'DELETE',
                 headers: {
@@ -151,38 +139,36 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
             const data = await response.json();
 
             if (!response.ok) {
-                toast.error(data.message);
+                toast.error(data.message || "Delete failed");
                 return;
             }
             handleDeleteAddress(address);
-            toast.success(data.message);
-
+            toast.success(data.message || "Address deleted!");
         } catch (error) {
             console.log("error in deleting address", error);
-            toast.error("something went wrong");
+            toast.error("Something went wrong");
         }
-
     }
 
     return (
-        <div className='h-16 border-t flex items-center gap-2 mx-5'>
-
+        <div className='border-t px-5 py-3 flex items-center gap-2 bg-gray-50'>
             <Dialog>
-                <DialogTrigger>
-                    <Button type='button' className="border border-black text-sm hover:bg-white hover:text-black duration-500">
+                <DialogTrigger asChild>
+                    <Button type='button' variant="outline" size="sm" className="gap-1.5 text-xs">
+                        <Pencil className="h-3 w-3" />
                         Edit
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="px-10 max-w-[800px]">
                     <DialogHeader>
-                        <DialogTitle>Add Address</DialogTitle>
+                        <DialogTitle>Edit Address</DialogTitle>
                         <DialogDescription>
-                            Add your address to get your order delivered to your doorstep
+                            Update your delivery address details
                         </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit} className='flex flex-col gap-6 justify-center my-4'>
-                        <div className='grid grid-cols-2 gap-y-5 gap-x-2'>
+                        <div className='grid grid-cols-2 gap-y-5 gap-x-4'>
                             <div className="grid gap-2">
                                 <Label htmlFor="fullName">Full Name</Label>
                                 <Input
@@ -191,11 +177,11 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                                     className="py-5"
                                     id="fullName"
                                     name="fullName"
-                                    placeholder="person who will receive the order"
+                                    placeholder="Receiver's full name"
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="phone">Phone number</Label>
+                                <Label htmlFor="phone">Phone Number</Label>
                                 <Input
                                     value={editedAddress.phone}
                                     onChange={handleChange}
@@ -203,18 +189,18 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                                     className="py-5"
                                     id="phone"
                                     name="phone"
-                                    placeholder="phone number of receiver"
+                                    placeholder="10-digit phone number"
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="hfa">House no., Flat, Apartment</Label>
+                                <Label htmlFor="hfa">House No., Flat, Apartment</Label>
                                 <Input
                                     value={editedAddress.houseNo}
                                     onChange={handleChange}
                                     className="py-5"
                                     id="hfa"
                                     name="houseNo"
-                                    placeholder=""
+                                    placeholder="e.g. Flat 101, Tower B"
                                 />
                             </div>
                             <div className="grid gap-2">
@@ -225,7 +211,7 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                                     className="py-5"
                                     id="landmark"
                                     name="landmark"
-                                    placeholder=""
+                                    placeholder="e.g. Near City Mall"
                                 />
                             </div>
                             <div className="grid col-span-2 gap-2">
@@ -236,7 +222,6 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                                     className="py-5"
                                     id="asv"
                                     name="area"
-                                    placeholder=""
                                     required
                                 />
                             </div>
@@ -248,7 +233,7 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                                     className="py-5"
                                     id="pinCode"
                                     name="pinCode"
-                                    placeholder=""
+                                    placeholder="6-digit pincode"
                                 />
                             </div>
                             <div className="grid gap-2">
@@ -259,7 +244,6 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                                     className="py-5"
                                     id="city"
                                     name="city"
-                                    placeholder=""
                                 />
                             </div>
                             <div className="grid gap-2">
@@ -270,7 +254,6 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                                     className="py-5"
                                     id="state"
                                     name="state"
-                                    placeholder=""
                                 />
                             </div>
                             <div className="grid gap-2">
@@ -279,20 +262,19 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                                     value={editedAddress.country || "India"}
                                     onChange={handleChange}
                                     disabled={true}
-                                    className="py-5"
+                                    className="py-5 bg-gray-50"
                                     id="country"
                                     name="country"
-                                    placeholder=""
                                 />
                             </div>
                         </div>
                         <DialogFooter>
-                            <div className="flex gap-4">
+                            <div className="flex gap-3">
                                 <Button
                                     type="submit"
-                                    className="text-base border border-black font-normal p-5 hover:bg-accent hover:text-accent-foreground duration-500"
+                                    className="bg-yellow-600 hover:bg-yellow-500 py-5"
                                 >
-                                    Save
+                                    Save Changes
                                 </Button>
                             </div>
                             <DialogClose asChild className="hidden">
@@ -305,11 +287,18 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                 </DialogContent>
             </Dialog>
 
-            <Button type="button" onClick={haldleDelete} className="bg-white text-black border border-black text-sm font-normal hover:bg-accent hover:text-accent-foreground" > Remove </Button>
+            <Button
+                type="button"
+                onClick={handleDelete}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            >
+                <Trash2 className="h-3 w-3" />
+                Remove
+            </Button>
         </div>
     )
 }
 
 export default DeleteUpdateAddress
-
-

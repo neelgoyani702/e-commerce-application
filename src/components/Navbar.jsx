@@ -1,7 +1,7 @@
 import { cn } from "../lib/utils";
 import { useEffect, useState, useContext } from "react";
 import { Button } from "./ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { XIcon, Menu, ShoppingCart } from "lucide-react";
 import { AuthContext } from "../context/AuthProvider";
 import {
@@ -21,10 +21,10 @@ import { Input } from "./ui/input";
 import { toast } from "sonner";
 
 const navigation = [
+  { name: "Products", to: "/products" },
   { name: "Category", to: "/category" },
-  { name: "Orders", to: "/careers" },
-  { name: "About", to: "/about-us" },
-  { name: "Contact Us", to: "/contact-us" },
+  { name: "Orders", to: "/profile/orders" },
+  { name: "Contact Us", to: "/contact" },
 ];
 
 export default function Navbar() {
@@ -33,6 +33,8 @@ export default function Navbar() {
   const { user, setUser } = useContext(AuthContext);
 
   const [isOpen, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
   // const [current, setCurrent] = useState();
 
   const toggleOpen = () => setOpen((prev) => !prev);
@@ -50,8 +52,7 @@ export default function Navbar() {
 
   const logout = async () => {
     try {
-
-      toast.loading("Logging out...");
+      const toastId = toast.loading("Logging out...");
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/logout`, {
         method: "GET",
@@ -61,14 +62,18 @@ export default function Navbar() {
         credentials: "include",
       });
 
-      toast.dismiss();
-
+      toast.dismiss(toastId);
       const data = await response.json();
-      toast.success(data.message);
 
-      setUser(null);
+      if (response.ok) {
+        setUser(null);
+        navigate("/");
+        toast.success(data.message || "Logged out successfully");
+      } else {
+        toast.error(data.message || "Logout failed");
+      }
     } catch (e) {
-      toast.error(e);
+      toast.error(e.message || "Something went wrong");
       console.log("Error: in logout action", e);
     }
   };
@@ -116,7 +121,17 @@ export default function Navbar() {
               </div>
               <div className="flex justify-center items-center space-x-4">
                 <div className="hidden md:flex justify-center items-center min-w-48 max-w-56 w-full">
-                  <Input placeholder="Search" />
+                  <Input
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && searchQuery.trim()) {
+                        navigate(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+                        setSearchQuery("");
+                      }
+                    }}
+                  />
                 </div>
                 <Link to="/checkout/cart">
                   <ShoppingCart className="h-6 w-6" />
