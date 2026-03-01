@@ -1,8 +1,6 @@
 import React, { useState, useContext } from 'react'
 import { AuthContext } from "../../context/AuthProvider";
 import { User, Pencil, Mail, Phone, Check, X } from 'lucide-react';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
 import { toast } from 'sonner';
 
 function ProfileInfo() {
@@ -81,23 +79,22 @@ function ProfileInfo() {
     }
 
     return (
-        <div className='py-6 px-5 md:px-8'>
+        <div className='p-6 md:p-8'>
             {/* Header */}
             <div className='flex items-center justify-between mb-8'>
                 <div className='flex items-center gap-3'>
-                    <div className="h-10 w-10 rounded-xl bg-yellow-50 flex items-center justify-center">
+                    <div className="h-11 w-11 rounded-xl bg-yellow-50 flex items-center justify-center">
                         <User size={20} className='text-yellow-600' />
                     </div>
                     <div>
-                        <h1 className='text-lg font-bold text-gray-900'>Personal Information</h1>
+                        <h1 className='text-xl font-bold text-gray-900 tracking-tight'>Personal Information</h1>
                         <p className='text-xs text-gray-400'>Manage your profile details</p>
                     </div>
                 </div>
-
                 {!editEnabled && (
                     <button
                         type="button"
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-all"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-yellow-700 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 px-4 py-2 rounded-xl transition-all"
                         onClick={() => {
                             setEditEnabled(true);
                             toast.info('You can now edit your profile');
@@ -109,84 +106,89 @@ function ProfileInfo() {
                 )}
             </div>
 
-            {/* Profile Card */}
-            <div className="bg-gray-50/80 rounded-2xl border border-gray-100 p-6 mb-6">
-                <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <img
-                            src={user?.image}
-                            alt={user?.firstName || "user"}
-                            className="w-16 h-16 rounded-2xl object-cover ring-2 ring-yellow-400/20 ring-offset-2"
-                        />
-                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-gray-900 text-lg">{user?.firstName} {user?.lastName}</h2>
-                        <p className="text-sm text-gray-400">{user?.email}</p>
-                        <span className="inline-flex items-center mt-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></div>
-                            Active
-                        </span>
-                    </div>
-                </div>
-            </div>
-
             {/* Form */}
-            <form onSubmit={handleSubmit} className='flex flex-col gap-5'>
+            <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
+                    {/* First Name */}
                     <div className="space-y-2">
-                        <Label htmlFor="first-name" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">First Name</Label>
-                        <Input
+                        <label htmlFor="first-name" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            First Name
+                        </label>
+                        <input
                             value={userData.firstName}
                             onChange={handleChange}
-                            className={`py-5 rounded-xl border-gray-200 ${editEnabled ? 'bg-white focus:border-yellow-400 focus:ring-yellow-400/20' : 'bg-gray-50/80'}`}
+                            className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 focus:outline-none ${editEnabled
+                                    ? "border-gray-200 bg-white focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500"
+                                    : "border-gray-100 bg-gray-50/80 text-gray-700 cursor-default"
+                                }`}
                             id="first-name"
                             name="firstName"
                             placeholder="Enter first name"
                             disabled={!editEnabled}
                         />
                     </div>
+
+                    {/* Last Name */}
                     <div className="space-y-2">
-                        <Label htmlFor="last-name" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Last Name</Label>
-                        <Input
+                        <label htmlFor="last-name" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Last Name
+                        </label>
+                        <input
                             value={userData.lastName}
                             onChange={handleChange}
-                            className={`py-5 rounded-xl border-gray-200 ${editEnabled ? 'bg-white focus:border-yellow-400 focus:ring-yellow-400/20' : 'bg-gray-50/80'}`}
+                            className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 focus:outline-none ${editEnabled
+                                    ? "border-gray-200 bg-white focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500"
+                                    : "border-gray-100 bg-gray-50/80 text-gray-700 cursor-default"
+                                }`}
                             id="last-name"
                             name="lastName"
                             placeholder="Enter last name"
                             disabled={!editEnabled}
                         />
                     </div>
+
+                    {/* Email */}
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-                            <Mail className="h-3 w-3" />
-                            Email
-                        </Label>
-                        <Input
-                            value={userData.email}
-                            disabled={true}
-                            className="py-5 rounded-xl bg-gray-50/80 border-gray-200"
-                            id="email"
-                            name="email"
-                        />
-                        <p className="text-[11px] text-gray-400">Email cannot be changed</p>
+                        <label htmlFor="email" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Email Address
+                        </label>
+                        <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
+                            <input
+                                value={userData.email}
+                                disabled={true}
+                                className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-100 bg-gray-50/80 text-sm font-medium text-gray-500 cursor-not-allowed"
+                                id="email"
+                                name="email"
+                            />
+                        </div>
+                        <p className="text-[11px] text-gray-400 flex items-center gap-1">
+                            <span className="w-1 h-1 rounded-full bg-gray-300 inline-block"></span>
+                            Email cannot be changed
+                        </p>
                     </div>
+
+                    {/* Phone */}
                     <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-                            <Phone className="h-3 w-3" />
+                        <label htmlFor="phone" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                             Phone Number
-                        </Label>
-                        <Input
-                            type="tel"
-                            value={userData.phone}
-                            onChange={handleChange}
-                            className={`py-5 rounded-xl border-gray-200 ${editEnabled ? 'bg-white focus:border-yellow-400 focus:ring-yellow-400/20' : 'bg-gray-50/80'}`}
-                            id="phone"
-                            name="phone"
-                            disabled={!editEnabled}
-                            placeholder="e.g. 9876543210"
-                        />
+                        </label>
+                        <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
+                            <input
+                                type="tel"
+                                value={userData.phone}
+                                onChange={handleChange}
+                                className={`w-full pl-11 pr-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 focus:outline-none ${editEnabled
+                                        ? "border-gray-200 bg-white focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500"
+                                        : "border-gray-100 bg-gray-50/80 text-gray-700 cursor-default"
+                                    }`}
+                                id="phone"
+                                name="phone"
+                                disabled={!editEnabled}
+                                placeholder="e.g. 9876543210"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -195,14 +197,14 @@ function ProfileInfo() {
                     <div className="flex gap-3 pt-2">
                         <button
                             type='submit'
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30"
+                            className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 text-sm"
                         >
                             <Check className="h-4 w-4" />
                             Save Changes
                         </button>
                         <button
                             type="button"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 text-gray-600 font-medium rounded-xl hover:border-gray-300 transition-all"
+                            className="inline-flex items-center gap-2 border-2 border-gray-200 text-gray-600 font-semibold px-6 py-3 rounded-xl hover:border-gray-300 hover:text-gray-700 transition-all duration-200 text-sm"
                             onClick={handleCancel}
                         >
                             <X className="h-4 w-4" />
