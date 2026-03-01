@@ -8,7 +8,6 @@ import {
   Clock,
   ShoppingBag,
   Check,
-  PartyPopper,
 } from "lucide-react";
 
 function OrderConfirmation() {

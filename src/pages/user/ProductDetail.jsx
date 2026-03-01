@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { IndianRupee, Heart, Star, ShoppingCart, ChevronRight, Truck, ShieldCheck, RotateCcw, Check } from "lucide-react";
-import { Button } from "../../components/ui/button";
 import AddToCart from "../../components/AddToCart";
 
 function ProductDetail() {

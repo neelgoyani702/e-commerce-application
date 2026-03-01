@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react'
 import { AuthContext } from "../../context/AuthProvider";
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
-import { IndianRupee, ShoppingCart, ShieldCheck, Truck, ArrowRight, ChevronDown, Trash2, RotateCcw } from 'lucide-react';
+import { IndianRupee, ShoppingCart, ShieldCheck, Truck, ArrowRight, ChevronDown, RotateCcw } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import AddToCart from '../../components/AddToCart';

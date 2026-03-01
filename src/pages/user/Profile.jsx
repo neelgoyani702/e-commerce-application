@@ -3,7 +3,6 @@ import { AuthContext } from "../../context/AuthProvider";
 import AccountSidebar from '../../components/AccountSidebar.jsx'
 import { useNavigate, Link } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
-import { User } from 'lucide-react';
 
 function Profile() {
 
