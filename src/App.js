@@ -22,8 +22,15 @@ import MyOrders from "./pages/user/MyOrders";
 import OrderHistory from "./pages/user/OrderHistory";
 import ChangePassword from "./pages/user/ChangePassword";
 import AllProducts from "./pages/user/AllProducts";
-import AdminOrders from "./pages/admin/AdminOrders";
 import NotFound from "./pages/user/NotFound";
+
+// Admin imports
+import AdminRoute from "./pages/admin/AdminRoute";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminCategories from "./pages/admin/AdminCategories";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 const router = createBrowserRouter([
   {
@@ -93,10 +100,6 @@ const router = createBrowserRouter([
         element: <OrderConfirmation />
       },
       {
-        path: "admin/orders",
-        element: <AdminOrders />
-      },
-      {
         path: "products",
         element: <AllProducts />
       },
@@ -104,6 +107,18 @@ const router = createBrowserRouter([
         path: "*",
         element: <NotFound />
       }
+    ],
+  },
+  // Admin routes — completely separate from user Layout
+  {
+    path: "admin",
+    element: <AdminRoute />,
+    children: [
+      { index: true, element: <AdminDashboard /> },
+      { path: "categories", element: <AdminCategories /> },
+      { path: "products", element: <AdminProducts /> },
+      { path: "orders", element: <AdminOrders /> },
+      { path: "users", element: <AdminUsers /> },
     ],
   },
 ]);
