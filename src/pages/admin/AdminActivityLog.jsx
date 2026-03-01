@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Ticket,
 } from "lucide-react";
 
 const actionLabels = {
@@ -20,6 +21,9 @@ const actionLabels = {
   category_deleted: { label: "Deleted category", color: "text-red-500 bg-red-50" },
   order_status_updated: { label: "Updated order", color: "text-amber-600 bg-amber-50" },
   user_role_updated: { label: "Updated user role", color: "text-violet-600 bg-violet-50" },
+  coupon_created: { label: "Created coupon", color: "text-emerald-600 bg-emerald-50" },
+  coupon_updated: { label: "Updated coupon", color: "text-blue-600 bg-blue-50" },
+  coupon_deleted: { label: "Deleted coupon", color: "text-red-500 bg-red-50" },
 };
 
 const typeIcons = {
@@ -27,6 +31,7 @@ const typeIcons = {
   category: FolderOpen,
   order: ShoppingCart,
   user: User,
+  coupon: Ticket,
 };
 
 function AdminActivityLog() {
@@ -113,6 +118,7 @@ function AdminActivityLog() {
           { key: "category", label: "Categories" },
           { key: "order", label: "Orders" },
           { key: "user", label: "Users" },
+          { key: "coupon", label: "Coupons" },
         ].map((tab) => (
           <button
             key={tab.key}

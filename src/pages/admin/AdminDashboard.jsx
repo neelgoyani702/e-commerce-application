@@ -14,6 +14,7 @@ import {
   Trophy,
   Crown,
   CalendarDays,
+  AlertTriangle,
 } from "lucide-react";
 import {
   BarChart,
@@ -39,6 +40,7 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lowStock, setLowStock] = useState([]);
 
   useEffect(() => {
     fetchStats();
@@ -66,6 +68,25 @@ function AdminDashboard() {
       setLoading(false);
     }
   }
+
+  async function fetchLowStock() {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/admin/low-stock?threshold=5`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      if (response.ok) setLowStock(data.products || []);
+    } catch { }
+  }
+
+  useEffect(() => {
+    fetchLowStock();
+  }, []);
 
   if (loading) {
     return (
@@ -200,8 +221,8 @@ function AdminDashboard() {
                 {card.change !== undefined && card.change !== 0 && (
                   <span
                     className={`inline-flex items-center text-[10px] font-bold ${card.change > 0
-                        ? "text-emerald-600"
-                        : "text-red-500"
+                      ? "text-emerald-600"
+                      : "text-red-500"
                       }`}
                   >
                     {card.change > 0 ? (
@@ -441,6 +462,65 @@ function AdminDashboard() {
         </div>
       </div>
 
+      {/* Inventory Alerts */}
+      {lowStock.length > 0 && (
+        <div className="bg-white rounded-xl border border-amber-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <h2 className="text-sm font-bold text-gray-900">
+                Inventory Alerts
+              </h2>
+              <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full">
+                {lowStock.length} items
+              </span>
+            </div>
+            <button
+              onClick={() => navigate("/admin/products")}
+              className="text-[11px] text-indigo-600 font-semibold hover:text-indigo-500 transition-colors"
+            >
+              Manage →
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {lowStock.slice(0, 6).map((product) => (
+              <div
+                key={product._id}
+                className="flex items-center gap-3 bg-gray-50 rounded-xl p-3"
+              >
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-10 h-10 rounded-lg object-cover bg-white"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
+                    <Package className="h-4 w-4 text-gray-300" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-900 capitalize truncate">
+                    {product.name}
+                  </p>
+                  <p className="text-[10px] text-gray-400">
+                    {product.category?.name || "Uncategorized"}
+                  </p>
+                </div>
+                <span
+                  className={`text-xs font-black px-2 py-1 rounded-lg ${product.stock === 0
+                      ? "bg-red-50 text-red-500"
+                      : "bg-amber-50 text-amber-600"
+                    }`}
+                >
+                  {product.stock === 0 ? "Out" : product.stock}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recent Orders */}
       <div className="bg-white rounded-xl border border-gray-100 p-5">
         <div className="flex items-center justify-between mb-5">
@@ -504,10 +584,10 @@ function AdminDashboard() {
                     <td className="py-3 pr-4">
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize ${order.status === "delivered"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : order.status === "cancelled"
-                              ? "bg-red-50 text-red-600"
-                              : "bg-yellow-50 text-yellow-700"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : order.status === "cancelled"
+                            ? "bg-red-50 text-red-600"
+                            : "bg-yellow-50 text-yellow-700"
                           }`}
                       >
                         {order.status}

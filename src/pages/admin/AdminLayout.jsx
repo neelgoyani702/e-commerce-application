@@ -13,6 +13,9 @@ import {
   X,
   ChevronRight,
   Activity,
+  TrendingUp,
+  Ticket,
+  Settings,
 } from "lucide-react";
 
 const navItems = [
@@ -21,7 +24,10 @@ const navItems = [
   { label: "Products", to: "/admin/products", icon: Package },
   { label: "Categories", to: "/admin/categories", icon: FolderOpen },
   { label: "Users", to: "/admin/users", icon: Users },
+  { label: "Customers", to: "/admin/customers", icon: TrendingUp },
+  { label: "Coupons", to: "/admin/coupons", icon: Ticket },
   { label: "Activity Log", to: "/admin/activity-log", icon: Activity },
+  { label: "Settings", to: "/admin/settings", icon: Settings },
 ];
 
 function AdminLayout() {
