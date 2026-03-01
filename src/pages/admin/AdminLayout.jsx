@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  Activity,
 } from "lucide-react";
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { label: "Products", to: "/admin/products", icon: Package },
   { label: "Categories", to: "/admin/categories", icon: FolderOpen },
   { label: "Users", to: "/admin/users", icon: Users },
+  { label: "Activity Log", to: "/admin/activity-log", icon: Activity },
 ];
 
 function AdminLayout() {
@@ -105,8 +107,8 @@ function AdminLayout() {
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 group ${active
-                    ? "bg-indigo-600/10 text-indigo-400 border-l-2 border-indigo-400 ml-0"
-                    : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                  ? "bg-indigo-600/10 text-indigo-400 border-l-2 border-indigo-400 ml-0"
+                  : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
                   }`}
               >
                 <Icon

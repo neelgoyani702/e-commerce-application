@@ -1,153 +1,168 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
-  FolderOpen,
   Plus,
-  Pencil,
-  Trash2,
   Search,
   X,
   Upload,
+  Pencil,
+  Trash2,
+  FolderOpen,
+  Package,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 
 function AdminCategories() {
   const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all"); // all, active, inactive
   const [showModal, setShowModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({ name: "" });
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ name: "", image: null });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchCategories();
+    fetchData();
   }, []);
 
-  async function fetchCategories() {
+  async function fetchData() {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/category/get-category`,
-        {
+      const [catRes, prodRes] = await Promise.all([
+        fetch(`${process.env.REACT_APP_API_URL}/category/get-category`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-        }
-      );
-      const data = await response.json();
-      if (response.ok) {
-        setCategories(data.categories || []);
-      }
-    } catch (error) {
-      toast.error("Failed to load categories");
+        }),
+        fetch(`${process.env.REACT_APP_API_URL}/product/get-products`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }),
+      ]);
+      const catData = await catRes.json();
+      const prodData = await prodRes.json();
+      if (catRes.ok) setCategories(catData.categories || []);
+      if (prodRes.ok) setProducts(prodData.products || []);
+    } catch {
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
   }
 
-  function openCreateModal() {
-    setEditingCategory(null);
-    setFormData({ name: "" });
-    setImageFile(null);
-    setImagePreview(null);
-    setShowModal(true);
+  function getProductCount(categoryId) {
+    return products.filter(
+      (p) =>
+        p.category === categoryId ||
+        p.category?._id === categoryId
+    ).length;
   }
 
-  function openEditModal(cat) {
-    setEditingCategory(cat);
-    setFormData({ name: cat.name });
-    setImageFile(null);
-    setImagePreview(cat.image);
-    setShowModal(true);
-  }
-
-  function closeModal() {
-    setShowModal(false);
-    setEditingCategory(null);
-    setFormData({ name: "" });
-    setImageFile(null);
-    setImagePreview(null);
-  }
-
-  function handleImageChange(e) {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!formData.name.trim()) {
+  async function handleSave() {
+    if (!form.name.trim()) {
       toast.error("Category name is required");
       return;
     }
-    if (!editingCategory && !imageFile) {
+    if (!editing && !form.image) {
       toast.error("Category image is required");
       return;
     }
 
-    setSubmitting(true);
-    const fd = new FormData();
-    fd.append("name", formData.name.trim());
-    if (imageFile) fd.append("Image", imageFile);
-
+    setSaving(true);
     try {
-      const url = editingCategory
-        ? `${process.env.REACT_APP_API_URL}/category/update-category/${editingCategory._id}`
+      const formData = new FormData();
+      formData.append("name", form.name.trim());
+      if (form.image) formData.append("categoryImage", form.image);
+
+      const url = editing
+        ? `${process.env.REACT_APP_API_URL}/category/update-category/${editing._id}`
         : `${process.env.REACT_APP_API_URL}/category/create-category`;
-      const method = editingCategory ? "PUT" : "POST";
 
       const response = await fetch(url, {
-        method,
-        body: fd,
+        method: editing ? "PUT" : "POST",
         credentials: "include",
+        body: formData,
       });
+
       const data = await response.json();
       if (response.ok) {
-        toast.success(data.message || "Success");
-        fetchCategories();
-        closeModal();
+        toast.success(data.message || "Saved!");
+        setShowModal(false);
+        setEditing(null);
+        setForm({ name: "", image: null });
+        fetchData();
       } else {
-        toast.error(data.message || "Operation failed");
+        toast.error(data.message || "Failed to save");
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("Delete this category? All products in this category will also be deleted.")) return;
+    if (!window.confirm("Delete this category and all its products?")) return;
     try {
-      const toastId = toast.loading("Deleting...");
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/category/delete-category/${id}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
+        { method: "DELETE", credentials: "include" }
       );
-      toast.dismiss(toastId);
       const data = await response.json();
       if (response.ok) {
-        toast.success("Category deleted");
-        setCategories(categories.filter((c) => c._id !== id));
+        toast.success(data.message || "Deleted!");
+        fetchData();
       } else {
         toast.error(data.message || "Failed to delete");
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     }
   }
 
-  const filtered = categories.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
+  async function toggleActive(cat) {
+    try {
+      const formData = new FormData();
+      formData.append("isActive", !cat.isActive);
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/category/update-category/${cat._id}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          body: formData,
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(
+          `Category ${!cat.isActive ? "activated" : "deactivated"}`
+        );
+        setCategories(
+          categories.map((c) =>
+            c._id === cat._id ? { ...c, isActive: !cat.isActive } : c
+          )
+        );
+      } else {
+        toast.error(data.message || "Failed to update");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    }
+  }
+
+  const filtered = categories
+    .filter((cat) => {
+      if (filter === "active") return cat.isActive !== false;
+      if (filter === "inactive") return cat.isActive === false;
+      return true;
+    })
+    .filter((cat) =>
+      cat.name.toLowerCase().includes(search.toLowerCase())
+    );
 
   if (loading) {
     return (
@@ -158,7 +173,7 @@ function AdminCategories() {
   }
 
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-6xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -167,31 +182,57 @@ function AdminCategories() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">Categories</h2>
-            <p className="text-[11px] text-gray-400">{categories.length} categories</p>
+            <p className="text-[11px] text-gray-400">
+              {categories.length} categories
+            </p>
           </div>
         </div>
         <button
-          onClick={openCreateModal}
-          className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors"
+          onClick={() => {
+            setEditing(null);
+            setForm({ name: "", image: null });
+            setShowModal(true);
+          }}
+          className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           Add Category
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-5">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
-        <input
-          type="text"
-          placeholder="Search categories..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
-        />
+      {/* Filters & Search */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: "all", label: "All" },
+            { key: "active", label: "Active" },
+            { key: "inactive", label: "Inactive" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filter === tab.key
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white border border-gray-100 text-gray-500 hover:bg-gray-50"
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
+          <input
+            type="text"
+            placeholder="Search categories..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+          />
+        </div>
       </div>
 
-      {/* Grid */}
+      {/* Categories Grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <FolderOpen className="h-10 w-10 mx-auto mb-3 text-gray-200" />
@@ -199,139 +240,190 @@ function AdminCategories() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((cat) => (
-            <div
-              key={cat._id}
-              className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200 group"
-            >
-              <div className="h-36 bg-gray-50 overflow-hidden">
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="p-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-gray-900 capitalize">
-                    {cat.name}
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditModal(cat)}
-                      className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-colors"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(cat._id)}
-                      className="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+          {filtered.map((cat) => {
+            const count = getProductCount(cat._id);
+            const isActive = cat.isActive !== false;
+            return (
+              <div
+                key={cat._id}
+                className={`bg-white rounded-xl border border-gray-100 overflow-hidden transition-all hover:shadow-md ${!isActive ? "opacity-50" : ""
+                  }`}
+              >
+                {/* Image */}
+                <div className="relative h-36 bg-gray-50">
+                  {cat.image ? (
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FolderOpen className="h-10 w-10 text-gray-200" />
+                    </div>
+                  )}
+                  {/* Inactive overlay */}
+                  {!isActive && (
+                    <div className="absolute inset-0 bg-gray-900/40 flex items-center justify-center">
+                      <span className="text-xs font-bold text-white bg-gray-900/60 px-3 py-1 rounded-full">
+                        Inactive
+                      </span>
+                    </div>
+                  )}
+                  {/* Product count badge */}
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                    <Package className="h-3 w-3 text-gray-500" />
+                    {count}
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">
-                  Created {new Date(cat.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                </p>
+
+                {/* Info */}
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900 capitalize">
+                        {cat.name}
+                      </h3>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {count} product{count !== 1 ? "s" : ""} ·{" "}
+                        Created{" "}
+                        {new Date(cat.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between">
+                    {/* isActive toggle */}
+                    <button
+                      onClick={() => toggleActive(cat)}
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold py-1 px-2 rounded-md transition-colors ${isActive
+                          ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
+                          : "text-gray-400 bg-gray-50 hover:bg-gray-100"
+                        }`}
+                    >
+                      {isActive ? (
+                        <ToggleRight className="h-4 w-4" />
+                      ) : (
+                        <ToggleLeft className="h-4 w-4" />
+                      )}
+                      {isActive ? "Active" : "Inactive"}
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          setEditing(cat);
+                          setForm({ name: cat.name, image: null });
+                          setShowModal(true);
+                        }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(cat._id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Modal */}
+      {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">
-                {editingCategory ? "Edit Category" : "New Category"}
-              </h3>
-              <button
-                onClick={closeModal}
-                className="p-1 rounded-md hover:bg-gray-100 text-gray-400"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full mt-1.5 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                  placeholder="Category name"
-                />
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-40"
+            onClick={() => setShowModal(false)}
+          />
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900">
+                  {editing ? "Edit Category" : "New Category"}
+                </h3>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Image
-                </label>
-                <div className="mt-1.5">
-                  {imagePreview ? (
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview(null);
-                        }}
-                        className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors">
-                      <Upload className="h-5 w-5 text-gray-300 mb-1" />
-                      <span className="text-xs text-gray-400">
-                        Click to upload
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageChange}
-                      />
-                    </label>
-                  )}
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm({ ...form, name: e.target.value })
+                    }
+                    placeholder="e.g. Electronics"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                    Image
+                  </label>
+                  <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors">
+                    <Upload className="h-5 w-5 text-gray-300 mb-1" />
+                    <span className="text-xs text-gray-400">
+                      {form.image
+                        ? form.image.name
+                        : editing
+                          ? "Upload new image (optional)"
+                          : "Click to upload"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        setForm({ ...form, image: e.target.files[0] })
+                      }
+                    />
+                  </label>
                 </div>
               </div>
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
                 <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-300 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
-                >
-                  {submitting
-                    ? "Saving..."
-                    : editingCategory
-                      ? "Update"
-                      : "Create"}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 py-2 text-xs font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {saving
+                    ? "Saving..."
+                    : editing
+                      ? "Update"
+                      : "Create"}
+                </button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

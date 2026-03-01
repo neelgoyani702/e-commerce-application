@@ -8,8 +8,12 @@ import {
   Users,
   IndianRupee,
   TrendingUp,
+  TrendingDown,
   Clock,
   ArrowUpRight,
+  Trophy,
+  Crown,
+  CalendarDays,
 } from "lucide-react";
 import {
   BarChart,
@@ -25,6 +29,11 @@ import {
 } from "recharts";
 
 const COLORS = ["#eab308", "#22c55e", "#ef4444"];
+
+function getChangePercent(current, previous) {
+  if (!previous || previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+}
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -52,7 +61,6 @@ function AdminDashboard() {
         toast.error(data.message || "Failed to load stats");
       }
     } catch (error) {
-      console.error("Error fetching stats:", error);
       toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
@@ -76,6 +84,15 @@ function AdminDashboard() {
     );
   }
 
+  const orderChange = getChangePercent(
+    stats.comparison?.thisMonth?.orders || 0,
+    stats.comparison?.lastMonth?.orders || 0
+  );
+  const revenueChange = getChangePercent(
+    stats.comparison?.thisMonth?.revenue || 0,
+    stats.comparison?.lastMonth?.revenue || 0
+  );
+
   const statCards = [
     {
       label: "Total Orders",
@@ -84,6 +101,7 @@ function AdminDashboard() {
       color: "text-indigo-600",
       bg: "bg-indigo-50",
       link: "/admin/orders",
+      change: orderChange,
     },
     {
       label: "Total Products",
@@ -116,6 +134,7 @@ function AdminDashboard() {
       color: "text-rose-600",
       bg: "bg-rose-50",
       link: null,
+      change: revenueChange,
     },
   ];
 
@@ -127,6 +146,29 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6 max-w-7xl">
+      {/* Today Summary */}
+      <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white">
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarDays className="h-4 w-4 text-white/70" />
+          <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">
+            Today's Summary
+          </span>
+        </div>
+        <div className="flex items-center gap-8">
+          <div>
+            <p className="text-3xl font-bold">{stats.today?.count || 0}</p>
+            <p className="text-xs text-white/60 mt-0.5">Orders</p>
+          </div>
+          <div className="w-px h-10 bg-white/20" />
+          <div>
+            <p className="text-3xl font-bold">
+              ₹{(stats.today?.revenue || 0).toLocaleString()}
+            </p>
+            <p className="text-xs text-white/60 mt-0.5">Revenue</p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {statCards.map((card, i) => {
@@ -151,9 +193,26 @@ function AdminDashboard() {
               <p className="text-2xl font-bold text-gray-900 tracking-tight">
                 {card.value}
               </p>
-              <p className="text-[11px] text-gray-400 font-medium mt-0.5">
-                {card.label}
-              </p>
+              <div className="flex items-center justify-between mt-0.5">
+                <p className="text-[11px] text-gray-400 font-medium">
+                  {card.label}
+                </p>
+                {card.change !== undefined && card.change !== 0 && (
+                  <span
+                    className={`inline-flex items-center text-[10px] font-bold ${card.change > 0
+                        ? "text-emerald-600"
+                        : "text-red-500"
+                      }`}
+                  >
+                    {card.change > 0 ? (
+                      <TrendingUp className="h-3 w-3 mr-0.5" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 mr-0.5" />
+                    )}
+                    {Math.abs(card.change)}%
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
@@ -279,6 +338,109 @@ function AdminDashboard() {
         </div>
       </div>
 
+      {/* Top Products & Top Customers */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Products */}
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="h-4 w-4 text-amber-500" />
+            <h2 className="text-sm font-bold text-gray-900">
+              Top Selling Products
+            </h2>
+          </div>
+          {stats.topProducts?.length > 0 ? (
+            <div className="space-y-3">
+              {stats.topProducts.map((p, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 group"
+                >
+                  <span className="text-[11px] font-bold text-gray-300 w-5 text-center">
+                    {i + 1}
+                  </span>
+                  {p.image ? (
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      className="w-9 h-9 rounded-lg object-cover bg-gray-50"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center">
+                      <Package className="h-4 w-4 text-gray-300" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 capitalize truncate">
+                      {p.name || "Product"}
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      {p.totalOrders} orders · {p.totalQuantity} units
+                    </p>
+                  </div>
+                  <p className="text-xs font-bold text-gray-900">
+                    ₹{p.totalRevenue?.toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-300 text-center py-8">
+              No order data yet
+            </p>
+          )}
+        </div>
+
+        {/* Top Customers */}
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Crown className="h-4 w-4 text-violet-500" />
+            <h2 className="text-sm font-bold text-gray-900">
+              Top Customers
+            </h2>
+          </div>
+          {stats.topCustomers?.length > 0 ? (
+            <div className="space-y-3">
+              {stats.topCustomers.map((c, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3"
+                >
+                  <span className="text-[11px] font-bold text-gray-300 w-5 text-center">
+                    {i + 1}
+                  </span>
+                  {c.image ? (
+                    <img
+                      src={c.image}
+                      alt=""
+                      className="w-9 h-9 rounded-full object-cover bg-gray-50"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-violet-50 flex items-center justify-center">
+                      <Users className="h-4 w-4 text-violet-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">
+                      {c.firstName || "User"} {c.lastName || ""}
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      {c.orderCount} orders
+                    </p>
+                  </div>
+                  <p className="text-xs font-bold text-gray-900">
+                    ₹{c.totalSpent?.toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-300 text-center py-8">
+              No customer data yet
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Recent Orders */}
       <div className="bg-white rounded-xl border border-gray-100 p-5">
         <div className="flex items-center justify-between mb-5">
@@ -309,17 +471,25 @@ function AdminDashboard() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {stats.recentOrders.map((order) => (
-                  <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr
+                    key={order._id}
+                    onClick={() => navigate("/admin/orders")}
+                    className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                  >
                     <td className="py-3 pr-4 font-mono text-xs text-gray-400">
                       #{order._id.slice(-8).toUpperCase()}
                     </td>
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-2">
-                        <img
-                          src={order.userId?.image}
-                          alt=""
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
+                        {order.userId?.image ? (
+                          <img
+                            src={order.userId.image}
+                            alt=""
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gray-100" />
+                        )}
                         <span className="text-xs font-medium text-gray-700 truncate max-w-[120px]">
                           {order.userId?.firstName} {order.userId?.lastName}
                         </span>

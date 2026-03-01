@@ -31,6 +31,7 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminActivityLog from "./pages/admin/AdminActivityLog";
 
 const router = createBrowserRouter([
   {
@@ -119,6 +120,7 @@ const router = createBrowserRouter([
       { path: "products", element: <AdminProducts /> },
       { path: "orders", element: <AdminOrders /> },
       { path: "users", element: <AdminUsers /> },
+      { path: "activity-log", element: <AdminActivityLog /> },
     ],
   },
 ]);
