@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -12,6 +12,7 @@ import {
 } from "../../components/ui/select";
 import { ArrowUpDown, Package, ArrowLeft } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
+import { AuthContext } from '../../context/AuthProvider';
 
 function CategoryProducts() {
 
@@ -22,6 +23,32 @@ function CategoryProducts() {
     const [category, setCategory] = useState(null);
     const [sort, setSort] = useState("name-asc");
     const [loading, setLoading] = useState(true);
+    const { user } = useContext(AuthContext);
+    const [userWishlist, setUserWishlist] = useState([]);
+
+    // Fetch wishlist
+    useEffect(() => {
+        if (!user) return;
+        async function fetchWishlist() {
+            try {
+                const response = await fetch(
+                    `${process.env.REACT_APP_API_URL}/user/wishlist`,
+                    { method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include" }
+                );
+                const data = await response.json();
+                if (response.ok && data.wishlist) {
+                    setUserWishlist(data.wishlist.map(p => p._id || p));
+                }
+            } catch (error) { /* silent */ }
+        }
+        fetchWishlist();
+    }, [user]);
+
+    const handleWishlistToggle = (productId, action) => {
+        setUserWishlist(prev =>
+            action === "added" ? [...prev, productId] : prev.filter(id => id !== productId)
+        );
+    };
 
     async function getCategoryProducts() {
         try {
@@ -89,12 +116,12 @@ function CategoryProducts() {
                                 <span className="text-gray-500">/</span>
                                 <Link to="/category" className="hover:text-white transition-colors">Categories</Link>
                                 <span className="text-gray-500">/</span>
-                                <span className="text-yellow-400 font-medium capitalize">{category.name}</span>
+                                <span className="text-store-primary font-medium capitalize">{category.name}</span>
                             </nav>
 
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                                 <div>
-                                    <p className="text-yellow-400 text-sm font-semibold tracking-widest uppercase mb-2">
+                                    <p className="text-store-primary text-sm font-semibold tracking-widest uppercase mb-2">
                                         Collection
                                     </p>
                                     <h1 className="text-4xl md:text-5xl font-extrabold text-white capitalize tracking-tight">
@@ -122,7 +149,7 @@ function CategoryProducts() {
             {/* Loading hero placeholder */}
             {!category && loading && (
                 <div className="h-72 md:h-96 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-                    <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
             )}
 
@@ -154,7 +181,7 @@ function CategoryProducts() {
                 {/* Loading */}
                 {loading && (
                     <div className="flex justify-center py-20">
-                        <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 )}
 
@@ -163,7 +190,7 @@ function CategoryProducts() {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-12">
                         {products.map((product, i) => (
                             <div key={product._id} className={`animate-fade-in-up animation-delay-${(i % 4) * 100}`}>
-                                <ProductCard product={product} />
+                                <ProductCard product={product} wishlist={userWishlist} onWishlistToggle={handleWishlistToggle} />
                             </div>
                         ))}
                     </div>
@@ -179,7 +206,7 @@ function CategoryProducts() {
                         <p className="text-gray-400 text-sm mb-4">This category doesn't have any products yet</p>
                         <Link
                             to="/products"
-                            className="inline-flex items-center gap-2 text-sm font-semibold text-yellow-700 hover:text-yellow-600 transition-colors"
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-store-primary-dark hover:text-store-primary transition-colors"
                         >
                             Browse all products →
                         </Link>

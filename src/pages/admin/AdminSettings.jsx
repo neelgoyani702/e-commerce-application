@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
+import { SettingsContext } from "../../context/SettingsProvider";
 import {
   Settings,
   Save,
@@ -9,10 +10,8 @@ import {
   Palette,
 } from "lucide-react";
 
-const STORAGE_KEY = "admin_store_settings";
-
 const DEFAULT_SETTINGS = {
-  storeName: "bon ton",
+  storeName: "ShopKart",
   tagline: "Premium Shopping",
   currency: "INR",
   currencySymbol: "₹",
@@ -29,22 +28,42 @@ const DEFAULT_SETTINGS = {
 };
 
 function AdminSettings() {
+  const { refreshSettings } = useContext(SettingsContext);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [original, setOriginal] = useState(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) });
-      } catch { }
-    }
+    fetchSettings();
   }, []);
+
+  async function fetchSettings() {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/settings`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const data = await response.json();
+      if (response.ok && data.settings) {
+        const merged = { ...DEFAULT_SETTINGS, ...data.settings };
+        setSettings(merged);
+        setOriginal(merged);
+      }
+    } catch {
+      toast.error("Failed to load settings");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const dirty = JSON.stringify(settings) !== JSON.stringify(original);
 
   function handleChange(field, value) {
     setSettings({ ...settings, [field]: value });
-    setDirty(true);
   }
 
   function handleSocialChange(platform, value) {
@@ -52,18 +71,42 @@ function AdminSettings() {
       ...settings,
       socialLinks: { ...settings.socialLinks, [platform]: value },
     });
-    setDirty(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaving(true);
-    // Save to localStorage (could be API in production)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    setTimeout(() => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/settings`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(settings),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Settings saved successfully");
+        setOriginal(settings);
+        // Refresh the global settings context so Navbar/Footer update immediately
+        refreshSettings();
+      } else {
+        toast.error(data.message || "Failed to save settings");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
       setSaving(false);
-      setDirty(false);
-      toast.success("Settings saved successfully");
-    }, 400);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
   return (
@@ -85,8 +128,8 @@ function AdminSettings() {
           onClick={handleSave}
           disabled={!dirty || saving}
           className={`inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg transition-all ${dirty
-            ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
         >
           <Save className="h-3.5 w-3.5" />
@@ -289,6 +332,46 @@ function AdminSettings() {
                 />
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Live Preview */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <h3 className="text-sm font-bold text-gray-900 mb-4">Preview</h3>
+          <div className="bg-gray-50 rounded-lg p-5 space-y-2">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                style={{ backgroundColor: settings.primaryColor }}
+              >
+                {settings.storeName?.charAt(0)?.toUpperCase() || "S"}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900">
+                  {settings.storeName || "Store Name"}
+                </p>
+                <p className="text-[11px] text-gray-400">
+                  {settings.tagline || "Tagline"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <div
+                className="h-6 px-3 rounded-full text-white text-[11px] font-semibold flex items-center"
+                style={{ backgroundColor: settings.primaryColor }}
+              >
+                Primary
+              </div>
+              <div
+                className="h-6 px-3 rounded-full text-white text-[11px] font-semibold flex items-center"
+                style={{ backgroundColor: settings.accentColor }}
+              >
+                Accent
+              </div>
+              <span className="text-xs text-gray-500 ml-2">
+                Currency: {settings.currencySymbol} ({settings.currency})
+              </span>
+            </div>
           </div>
         </div>
       </div>

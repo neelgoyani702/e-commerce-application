@@ -3,12 +3,14 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthProvider";
+import { SettingsContext } from "../../context/SettingsProvider";
 import { toast } from "sonner";
 import { Mail, Lock, ArrowRight, ShoppingBag, Truck, ShieldCheck, Star } from "lucide-react";
 
 function Login() {
     const navigate = useNavigate();
     const { user, setUser } = useContext(AuthContext);
+    const { settings } = useContext(SettingsContext);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -76,18 +78,18 @@ function Login() {
             {/* Left Panel — Brand */}
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
                 {/* Decorative circles */}
-                <div className="absolute top-20 -left-20 w-72 h-72 bg-yellow-500/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-20 right-10 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-yellow-500/5 rounded-full blur-2xl" />
+                <div className="absolute top-20 -left-20 w-72 h-72 bg-store-primary/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-20 right-10 w-96 h-96 bg-store-primary/5 rounded-full blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-store-primary/5 rounded-full blur-2xl" />
 
                 <div className="relative z-10 flex flex-col justify-between w-full p-12">
                     {/* Top — Logo */}
                     <div>
                         <Link to="/" className="inline-flex items-center gap-2">
-                            <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-store-primary rounded-xl flex items-center justify-center">
                                 <ShoppingBag className="h-5 w-5 text-white" />
                             </div>
-                            <span className="text-xl font-bold text-white">bon ton</span>
+                            <span className="text-xl font-bold text-white">{settings?.storeName || "ShopKart"}</span>
                         </Link>
                     </div>
 
@@ -96,7 +98,7 @@ function Login() {
                         <div>
                             <h2 className="text-4xl font-bold text-white leading-tight">
                                 Welcome back to<br />
-                                <span className="text-yellow-400">bon ton</span>
+                                <span className="text-store-primary">{settings?.storeName || "ShopKart"}</span>
                             </h2>
                             <p className="text-gray-400 mt-4 text-lg max-w-md">
                                 Sign in to access your orders, wishlist, and exclusive member deals.
@@ -112,7 +114,7 @@ function Login() {
                             ].map((badge, i) => (
                                 <div key={i} className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                                        <badge.icon className="h-5 w-5 text-yellow-400" />
+                                        <badge.icon className="h-5 w-5 text-store-primary" />
                                     </div>
                                     <span className="text-gray-300 text-sm">{badge.text}</span>
                                 </div>
@@ -124,7 +126,7 @@ function Login() {
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
                         <div className="flex gap-1 mb-3">
                             {[...Array(5)].map((_, i) => (
-                                <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                <Star key={i} className="h-4 w-4 fill-store-primary text-store-primary" />
                             ))}
                         </div>
                         <p className="text-gray-300 text-sm italic">
@@ -141,10 +143,10 @@ function Login() {
                     {/* Mobile Logo */}
                     <div className="lg:hidden text-center">
                         <Link to="/" className="inline-flex items-center gap-2">
-                            <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-store-primary rounded-xl flex items-center justify-center">
                                 <ShoppingBag className="h-5 w-5 text-white" />
                             </div>
-                            <span className="text-xl font-bold text-gray-900">bon ton</span>
+                            <span className="text-xl font-bold text-gray-900">{settings?.storeName || "ShopKart"}</span>
                         </Link>
                     </div>
 
@@ -171,7 +173,7 @@ function Login() {
                                     name="email"
                                     placeholder="you@example.com"
                                     required
-                                    className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all"
+                                    className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary transition-all"
                                 />
                             </div>
                         </div>
@@ -189,7 +191,7 @@ function Login() {
                                     type="password"
                                     placeholder="••••••••"
                                     required
-                                    className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all"
+                                    className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary transition-all"
                                 />
                             </div>
                         </div>
@@ -197,7 +199,7 @@ function Login() {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full h-12 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full h-12 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-store-primary hover:shadow-store-primary-lg disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {submitting ? (
                                 <>
@@ -228,7 +230,7 @@ function Login() {
                         Don't have an account?{" "}
                         <Link
                             to="/signup"
-                            className="font-semibold text-yellow-700 hover:text-yellow-600 transition-colors"
+                            className="font-semibold text-store-primary-dark hover:text-store-primary transition-colors"
                         >
                             Create one →
                         </Link>

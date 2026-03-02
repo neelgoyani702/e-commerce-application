@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -19,14 +19,41 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import ProductCard from "../../components/ProductCard";
+import { AuthContext } from "../../context/AuthProvider";
 
 function AllProducts() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useContext(AuthContext);
 
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userWishlist, setUserWishlist] = useState([]);
+
+  // Fetch wishlist
+  useEffect(() => {
+    if (!user) return;
+    async function fetchWishlist() {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/user/wishlist`,
+          { method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include" }
+        );
+        const data = await response.json();
+        if (response.ok && data.wishlist) {
+          setUserWishlist(data.wishlist.map(p => p._id || p));
+        }
+      } catch (error) { /* silent */ }
+    }
+    fetchWishlist();
+  }, [user]);
+
+  const handleWishlistToggle = (productId, action) => {
+    setUserWishlist(prev =>
+      action === "added" ? [...prev, productId] : prev.filter(id => id !== productId)
+    );
+  };
 
   // Filters from URL params
   const selectedCategory = searchParams.get("category") || "all";
@@ -57,7 +84,7 @@ function AllProducts() {
   async function getCategories() {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/category/get-category`,
+        `${process.env.REACT_APP_API_URL}/category/get-category?active=true`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -145,21 +172,21 @@ function AllProducts() {
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
         {/* Decorative */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-yellow-500/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-store-primary/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-store-primary/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 md:py-20">
           <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <span className="text-gray-600">/</span>
-            <span className="text-yellow-400 font-medium">
+            <span className="text-store-primary font-medium">
               {searchQuery ? `Search: "${searchQuery}"` : "All Products"}
             </span>
           </nav>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+              <div className="h-14 w-14 rounded-2xl bg-store-gradient flex items-center justify-center shadow-lg shadow-store-primary">
                 <ShoppingBag className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -186,7 +213,7 @@ function AllProducts() {
                     updateFilter("q", e.target.value);
                   }
                 }}
-                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/30 focus:border-yellow-500/50 transition-all"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-store-primary focus:border-store-primary/50 transition-all"
               />
             </div>
           </div>
@@ -207,7 +234,7 @@ function AllProducts() {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="inline-flex items-center gap-1.5 text-xs font-medium bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-store-primary-light text-store-primary-dark px-3 py-1 rounded-full hover:bg-store-primary-light transition-colors"
               >
                 <X className="h-3 w-3" />
                 Clear all
@@ -264,7 +291,7 @@ function AllProducts() {
         {/* Loading */}
         {loading && (
           <div className="flex justify-center py-20">
-            <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
 
@@ -273,7 +300,7 @@ function AllProducts() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-12">
             {products.map((product, i) => (
               <div key={product._id} className={`animate-fade-in-up animation-delay-${(i % 4) * 100}`}>
-                <ProductCard product={product} />
+                <ProductCard product={product} wishlist={userWishlist} onWishlistToggle={handleWishlistToggle} />
               </div>
             ))}
           </div>
@@ -293,7 +320,7 @@ function AllProducts() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-yellow-700 hover:text-yellow-600 transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-store-primary-dark hover:text-store-primary transition-colors"
             >
               Clear Filters →
             </button>

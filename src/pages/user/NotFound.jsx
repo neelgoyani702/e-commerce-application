@@ -33,7 +33,7 @@ function NotFound() {
               Go Back
             </Button>
             <Button
-              className="gap-2 py-5 bg-yellow-600 hover:bg-yellow-500"
+              className="gap-2 py-5 bg-store-primary hover:bg-store-primary"
               onClick={() => navigate("/")}
             >
               <Home className="h-4 w-4" />

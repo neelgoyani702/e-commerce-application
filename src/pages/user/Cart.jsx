@@ -51,8 +51,10 @@ function Cart() {
     setCart((prevCart) => {
       const newCart = { ...prevCart };
       const index = newCart.products.findIndex((p) => p.productId._id === product._id);
+      const discount = product.discount || 0;
+      const effectivePrice = discount > 0 ? Math.round(product.price - (product.price * discount / 100)) : product.price;
       newCart.products[index].quantity = quantity;
-      newCart.products[index].price = product.price * quantity;
+      newCart.products[index].price = effectivePrice * quantity;
       newCart.totalAmount = newCart.products.reduce((acc, p) => acc + p.price, 0);
       newCart.totalItems = newCart.products.length;
       return newCart;
@@ -92,17 +94,17 @@ function Cart() {
     <div className='md:mt-16 mt-32 min-h-screen bg-gray-50/50'>
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-yellow-500/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-store-primary/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-store-primary/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 md:py-20">
           <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <span className="text-gray-600">/</span>
-            <span className="text-yellow-400 font-medium">Shopping Cart</span>
+            <span className="text-store-primary font-medium">Shopping Cart</span>
           </nav>
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+            <div className="h-14 w-14 rounded-2xl bg-store-gradient flex items-center justify-center shadow-lg shadow-store-primary">
               <ShoppingCart className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -123,7 +125,7 @@ function Cart() {
         {/* Loading */}
         {loading && (
           <div className="flex justify-center py-20">
-            <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
 
@@ -148,16 +150,21 @@ function Cart() {
                       <div className='flex flex-col justify-between py-1'>
                         <div>
                           <h3
-                            className='text-base font-semibold capitalize cursor-pointer hover:text-yellow-700 transition-colors leading-tight'
+                            className='text-base font-semibold capitalize cursor-pointer hover:text-store-primary-dark transition-colors leading-tight'
                             onClick={() => navigate(`/product/${item?.productId?._id}`)}
                           >
                             {item.productId?.name}
                           </h3>
                           <p className="text-xs text-gray-400 mt-1 capitalize">{item.productId?.category?.name || ""}</p>
                         </div>
-                        <div className='flex items-center gap-1'>
-                          <IndianRupee className='h-4 w-4 text-gray-900' />
-                          <span className='text-lg font-bold text-gray-900'>{item.price?.toLocaleString()}</span>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-lg font-bold text-gray-900'>₹{item.price?.toLocaleString()}</span>
+                          {item.productId?.discount > 0 && (
+                            <span className='text-xs text-gray-400 line-through'>₹{(item.productId.price * item.quantity)?.toLocaleString()}</span>
+                          )}
+                          {item.productId?.discount > 0 && (
+                            <span className='text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded'>{item.productId.discount}% OFF</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -169,7 +176,7 @@ function Cart() {
                       <Dialog>
                         <DialogTrigger>
                           <button
-                            className="flex items-center gap-2 h-9 px-4 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-yellow-400 hover:text-yellow-700 transition-all"
+                            className="flex items-center gap-2 h-9 px-4 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-store-primary hover:text-store-primary-dark transition-all"
                             onClick={() => setAddToCartQuantity(item.quantity)}
                           >
                             Qty: {item.quantity}
@@ -190,8 +197,8 @@ function Cart() {
                                   key={q}
                                   onClick={() => setAddToCartQuantity(q)}
                                   className={`w-10 h-10 rounded-xl text-sm font-medium border transition-all duration-200 ${addToCartQuantity === q
-                                      ? 'bg-yellow-500 text-white border-yellow-500 shadow-sm'
-                                      : 'bg-white text-gray-600 border-gray-200 hover:border-yellow-400'
+                                    ? 'bg-store-primary text-white border-store-primary shadow-sm'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-store-primary'
                                     }`}
                                 >
                                   {q}
@@ -205,7 +212,7 @@ function Cart() {
                               ATC={false}
                               handleChangeCartItems={handleChangeCartItems}
                             >
-                              <button className="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-md shadow-yellow-500/20">
+                              <button className="w-full py-3 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold rounded-xl transition-all duration-300 shadow-md shadow-store-primary">
                                 Confirm: {addToCartQuantity}
                               </button>
                             </AddToCart>
@@ -251,7 +258,7 @@ function Cart() {
                 </div>
 
                 <button
-                  className="w-full mt-6 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 flex items-center justify-center gap-2 text-base"
+                  className="w-full mt-6 py-4 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-store-primary hover:shadow-store-primary-lg flex items-center justify-center gap-2 text-base"
                   onClick={() => navigate('/checkout')}
                 >
                   Proceed to Checkout
@@ -262,7 +269,7 @@ function Cart() {
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   {[
                     { icon: ShieldCheck, text: "Secure Payment", color: "text-green-500" },
-                    { icon: Truck, text: "Free Delivery", color: "text-yellow-600" },
+                    { icon: Truck, text: "Free Delivery", color: "text-store-primary" },
                     { icon: RotateCcw, text: "Easy Returns", color: "text-blue-500" },
                     { icon: ShoppingCart, text: "Best Prices", color: "text-purple-500" },
                   ].map((item, i) => (
@@ -286,7 +293,7 @@ function Cart() {
             <h2 className="text-xl font-bold text-gray-700 mb-2">Your cart is empty</h2>
             <p className="text-gray-400 text-sm mb-8 max-w-sm text-center">Looks like you haven't added anything to your cart yet. Explore our products and find something you love.</p>
             <button
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold px-8 py-3.5 rounded-full transition-all duration-300 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 hover:scale-105"
+              className="inline-flex items-center gap-2 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold px-8 py-3.5 rounded-full transition-all duration-300 shadow-lg shadow-store-primary hover:shadow-store-primary-lg hover:scale-105"
               onClick={() => navigate('/products')}
             >
               Browse Products

@@ -36,7 +36,7 @@ function AuthProvider({ children }) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                    <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-gray-500 text-sm">Loading...</p>
                 </div>
             </div>

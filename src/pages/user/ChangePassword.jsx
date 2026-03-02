@@ -90,8 +90,8 @@ function ChangePassword() {
     <div className="py-6 px-4 md:px-8">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
-          <Lock size={24} className="text-yellow-700" />
+        <div className="h-12 w-12 rounded-full bg-store-primary-light flex items-center justify-center">
+          <Lock size={24} className="text-store-primary-dark" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Change Password</h1>
@@ -173,7 +173,7 @@ function ChangePassword() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full py-5 bg-yellow-600 hover:bg-yellow-500 text-base mt-2">
+          <Button type="submit" className="w-full py-5 bg-store-primary hover:bg-store-primary text-base mt-2">
             Update Password
           </Button>
         </form>

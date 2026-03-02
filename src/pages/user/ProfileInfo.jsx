@@ -83,8 +83,8 @@ function ProfileInfo() {
             {/* Header */}
             <div className='flex items-center justify-between mb-8'>
                 <div className='flex items-center gap-3'>
-                    <div className="h-11 w-11 rounded-xl bg-yellow-50 flex items-center justify-center">
-                        <User size={20} className='text-yellow-600' />
+                    <div className="h-11 w-11 rounded-xl bg-store-primary-light flex items-center justify-center">
+                        <User size={20} className='text-store-primary' />
                     </div>
                     <div>
                         <h1 className='text-xl font-bold text-gray-900 tracking-tight'>Personal Information</h1>
@@ -94,7 +94,7 @@ function ProfileInfo() {
                 {!editEnabled && (
                     <button
                         type="button"
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-yellow-700 hover:text-yellow-600 bg-yellow-50 hover:bg-yellow-100 px-4 py-2 rounded-xl transition-all"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-store-primary-dark hover:text-store-primary bg-store-primary-light hover:bg-store-primary-light px-4 py-2 rounded-xl transition-all"
                         onClick={() => {
                             setEditEnabled(true);
                             toast.info('You can now edit your profile');
@@ -118,7 +118,7 @@ function ProfileInfo() {
                             value={userData.firstName}
                             onChange={handleChange}
                             className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 focus:outline-none ${editEnabled
-                                    ? "border-gray-200 bg-white focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500"
+                                    ? "border-gray-200 bg-white focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary"
                                     : "border-gray-100 bg-gray-50/80 text-gray-700 cursor-default"
                                 }`}
                             id="first-name"
@@ -137,7 +137,7 @@ function ProfileInfo() {
                             value={userData.lastName}
                             onChange={handleChange}
                             className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 focus:outline-none ${editEnabled
-                                    ? "border-gray-200 bg-white focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500"
+                                    ? "border-gray-200 bg-white focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary"
                                     : "border-gray-100 bg-gray-50/80 text-gray-700 cursor-default"
                                 }`}
                             id="last-name"
@@ -180,7 +180,7 @@ function ProfileInfo() {
                                 value={userData.phone}
                                 onChange={handleChange}
                                 className={`w-full pl-11 pr-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 focus:outline-none ${editEnabled
-                                        ? "border-gray-200 bg-white focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500"
+                                        ? "border-gray-200 bg-white focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary"
                                         : "border-gray-100 bg-gray-50/80 text-gray-700 cursor-default"
                                     }`}
                                 id="phone"
@@ -197,7 +197,7 @@ function ProfileInfo() {
                     <div className="flex gap-3 pt-2">
                         <button
                             type='submit'
-                            className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 text-sm"
+                            className="inline-flex items-center gap-2 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg shadow-store-primary hover:shadow-store-primary-lg text-sm"
                         >
                             <Check className="h-4 w-4" />
                             Save Changes

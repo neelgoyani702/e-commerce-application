@@ -19,7 +19,7 @@ function Profile() {
   if (!user) {
     return (
       <div className="md:mt-16 mt-32 min-h-screen bg-gray-50/50 flex justify-center items-center">
-        <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -28,21 +28,21 @@ function Profile() {
     <div className='md:mt-16 mt-32 min-h-screen bg-gray-50/50'>
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-yellow-500/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-store-primary/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-store-primary/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 md:py-20">
           <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <span className="text-gray-600">/</span>
-            <span className="text-yellow-400 font-medium">My Account</span>
+            <span className="text-store-primary font-medium">My Account</span>
           </nav>
           <div className="flex items-center gap-4">
             <div className="relative">
               <img
                 src={user?.image}
                 alt={user?.firstName || "user"}
-                className="w-16 h-16 rounded-2xl object-cover ring-2 ring-yellow-400/50 ring-offset-2 ring-offset-gray-900 shadow-lg"
+                className="w-16 h-16 rounded-2xl object-cover ring-2 ring-store-primary ring-offset-2 ring-offset-gray-900 shadow-lg"
               />
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-900"></div>
             </div>

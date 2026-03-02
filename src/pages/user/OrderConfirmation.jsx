@@ -27,7 +27,7 @@ function OrderConfirmation() {
         <p className="text-sm text-gray-400 mb-4">This page may have expired</p>
         <button
           onClick={() => navigate("/")}
-          className="text-sm font-semibold text-yellow-700 hover:text-yellow-600 transition-colors"
+          className="text-sm font-semibold text-store-primary-dark hover:text-store-primary transition-colors"
         >
           Go Home →
         </button>
@@ -74,7 +74,7 @@ function OrderConfirmation() {
             <React.Fragment key={i}>
               <div className="flex items-center gap-2">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shadow-md ${i < 2
-                    ? "bg-gradient-to-br from-yellow-500 to-amber-500 text-white shadow-yellow-500/20"
+                    ? "bg-store-gradient text-white shadow-store-primary"
                     : "bg-gradient-to-br from-emerald-400 to-green-500 text-white shadow-emerald-500/20"
                   }`}>
                   <Check className="h-4 w-4" />
@@ -85,7 +85,7 @@ function OrderConfirmation() {
                 </span>
               </div>
               {i < steps.length - 1 && (
-                <div className={`w-16 h-0.5 mx-3 rounded-full ${i === 1 ? "bg-emerald-500" : "bg-yellow-500"
+                <div className={`w-16 h-0.5 mx-3 rounded-full ${i === 1 ? "bg-emerald-500" : "bg-store-primary"
                   }`} />
               )}
             </React.Fragment>
@@ -98,8 +98,8 @@ function OrderConfirmation() {
         <div className="rounded-2xl border border-gray-100 p-6 bg-white shadow-sm mb-6 animate-fade-in-up">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center">
-                <Package className="h-5 w-5 text-yellow-600" />
+              <div className="w-10 h-10 rounded-xl bg-store-primary-light flex items-center justify-center">
+                <Package className="h-5 w-5 text-store-primary" />
               </div>
               <div>
                 <h2 className="font-bold text-lg">Order Details</h2>
@@ -108,7 +108,7 @@ function OrderConfirmation() {
                 </p>
               </div>
             </div>
-            <span className="text-xs bg-yellow-50 text-yellow-700 px-3 py-1.5 rounded-full font-semibold capitalize">
+            <span className="text-xs bg-store-primary-light text-store-primary-dark px-3 py-1.5 rounded-full font-semibold capitalize">
               {order.status}
             </span>
           </div>
@@ -162,7 +162,7 @@ function OrderConfirmation() {
                   )}
                   <div className="flex-1">
                     <span
-                      className="text-sm font-semibold capitalize cursor-pointer hover:text-yellow-700 transition-colors"
+                      className="text-sm font-semibold capitalize cursor-pointer hover:text-store-primary-dark transition-colors"
                       onClick={() => item.productId?._id && navigate(`/product/${item.productId._id}`)}
                     >
                       {item.productId?.name || "Product"}
@@ -182,7 +182,7 @@ function OrderConfirmation() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-up animation-delay-100">
           <button
-            className="flex-1 inline-flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 text-base"
+            className="flex-1 inline-flex items-center justify-center gap-2 py-4 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-store-primary hover:shadow-store-primary-lg text-base"
             onClick={() => navigate("/products")}
           >
             Continue Shopping

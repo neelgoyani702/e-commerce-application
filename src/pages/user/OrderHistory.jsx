@@ -59,7 +59,7 @@ function OrderHistory() {
 
   const statusConfig = {
     "order placed": {
-      color: "bg-yellow-50 text-yellow-700",
+      color: "bg-store-primary-light text-store-primary-dark",
       icon: Package,
     },
     delivered: {
@@ -84,8 +84,8 @@ function OrderHistory() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-xl bg-yellow-50 flex items-center justify-center">
-            <History size={20} className="text-yellow-600" />
+          <div className="h-11 w-11 rounded-xl bg-store-primary-light flex items-center justify-center">
+            <History size={20} className="text-store-primary" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 tracking-tight">Order History</h1>
@@ -109,7 +109,7 @@ function OrderHistory() {
               key={tab.key}
               onClick={() => setFilter(tab.key)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${filter === tab.key
-                  ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-sm shadow-yellow-500/20"
+                  ? "bg-store-gradient text-white shadow-sm shadow-store-primary"
                   : "bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-100"
                 }`}
             >
@@ -125,7 +125,7 @@ function OrderHistory() {
       {/* Loading */}
       {loading && (
         <div className="flex justify-center py-16">
-          <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 
@@ -146,7 +146,7 @@ function OrderHistory() {
           {filter === "all" ? (
             <button
               onClick={() => navigate("/products")}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg shadow-yellow-500/25 text-sm"
+              className="inline-flex items-center gap-2 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg shadow-store-primary text-sm"
             >
               Browse Products
               <ArrowRight className="h-4 w-4" />
@@ -154,7 +154,7 @@ function OrderHistory() {
           ) : (
             <button
               onClick={() => setFilter("all")}
-              className="text-sm font-semibold text-yellow-700 hover:text-yellow-600 transition-colors"
+              className="text-sm font-semibold text-store-primary-dark hover:text-store-primary transition-colors"
             >
               Show All Orders →
             </button>
@@ -177,8 +177,8 @@ function OrderHistory() {
                 {/* Order Header */}
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-yellow-50 flex items-center justify-center">
-                      <Package className="h-4 w-4 text-yellow-600" />
+                    <div className="w-9 h-9 rounded-xl bg-store-primary-light flex items-center justify-center">
+                      <Package className="h-4 w-4 text-store-primary" />
                     </div>
                     <div>
                       <p className="text-xs text-gray-400 font-mono">
@@ -225,7 +225,7 @@ function OrderHistory() {
                       )}
                       <div className="flex-1 min-w-0">
                         <h3
-                          className="text-sm font-semibold capitalize cursor-pointer hover:text-yellow-700 transition-colors truncate"
+                          className="text-sm font-semibold capitalize cursor-pointer hover:text-store-primary-dark transition-colors truncate"
                           onClick={() =>
                             item.productId?._id &&
                             navigate(`/product/${item.productId._id}`)

@@ -86,6 +86,7 @@ body::-webkit-scrollbar {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -93,13 +94,23 @@ body::-webkit-scrollbar {
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .animate-fade-in-up {
@@ -110,7 +121,112 @@ body::-webkit-scrollbar {
   animation: fade-in 0.5s ease-out forwards;
 }
 
-.animation-delay-100 { animation-delay: 100ms; }
-.animation-delay-200 { animation-delay: 200ms; }
-.animation-delay-300 { animation-delay: 300ms; }
-.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+
+/* Store Theme Utilities - use admin-configured colors */
+.text-store-primary {
+  color: var(--store-primary, #eab308);
+}
+
+.text-store-accent {
+  color: var(--store-accent, #7c3aed);
+}
+
+.bg-store-primary {
+  background-color: var(--store-primary, #eab308);
+}
+
+.bg-store-accent {
+  background-color: var(--store-accent, #7c3aed);
+}
+
+.border-store-primary {
+  border-color: var(--store-primary, #eab308);
+}
+
+/* Hover states */
+.hover\:text-store-primary:hover {
+  color: var(--store-primary, #eab308);
+}
+
+.hover\:border-store-primary:hover {
+  border-color: var(--store-primary, #eab308);
+}
+
+/* Opacity backgrounds */
+.bg-store-primary\/5 {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 5%, transparent);
+}
+
+.bg-store-primary\/10 {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 10%, transparent);
+}
+
+.bg-store-primary\/20 {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 20%, transparent);
+}
+
+.bg-store-primary\/50 {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 50%, transparent);
+}
+
+/* Light bg for icons/badges */
+.bg-store-primary-light {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 10%, white);
+}
+
+/* Text with opacity */
+.text-store-primary-dark {
+  color: color-mix(in srgb, var(--store-primary, #eab308) 80%, black);
+}
+
+/* Gradient button */
+.bg-store-gradient {
+  background: linear-gradient(to right, var(--store-primary, #eab308), var(--store-accent, #f59e0b));
+}
+
+.hover\:bg-store-gradient-light:hover {
+  background: linear-gradient(to right, color-mix(in srgb, var(--store-primary, #eab308) 85%, white), color-mix(in srgb, var(--store-accent, #f59e0b) 85%, white));
+}
+
+.shadow-store-primary {
+  box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--store-primary, #eab308) 25%, transparent);
+}
+
+.shadow-store-primary-lg {
+  box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--store-primary, #eab308) 40%, transparent);
+}
+
+/* Focus ring */
+.focus\:ring-store-primary:focus {
+  --tw-ring-color: color-mix(in srgb, var(--store-primary, #eab308) 30%, transparent);
+}
+
+.focus\:border-store-primary:focus {
+  border-color: color-mix(in srgb, var(--store-primary, #eab308) 50%, transparent);
+}
+
+/* Spinner */
+.border-store-primary-spinner {
+  border-color: var(--store-primary, #eab308);
+  border-top-color: transparent;
+}
+
+/* SVG fill */
+.fill-store-primary {
+  fill: var(--store-primary, #eab308);
+}

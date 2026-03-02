@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { XIcon, Menu, ShoppingCart } from "lucide-react";
 import { AuthContext } from "../context/AuthProvider";
+import { SettingsContext } from "../context/SettingsProvider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,7 @@ export default function Navbar() {
   const [path] = useState(window.location.pathname);
 
   const { user, setUser } = useContext(AuthContext);
+  const { settings } = useContext(SettingsContext);
 
   const [isOpen, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +45,13 @@ export default function Navbar() {
     if (isOpen) toggleOpen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path]);
+
+  // Update document title with store name
+  useEffect(() => {
+    if (settings?.storeName) {
+      document.title = settings.storeName;
+    }
+  }, [settings?.storeName]);
 
   const closeOnCurrent = (to) => {
     if (path === to) {
@@ -98,14 +107,17 @@ export default function Navbar() {
               </Button>
             </div>
             <div className="flex flex-1 items-center justify-between sm:items-stretch sm:justify-start ml-12">
-              <Link to="/" className="flex flex-shrink-0 items-center">
+              <Link to="/" className="flex flex-shrink-0 items-center gap-2">
                 <img
                   className="block h-12 w-12 rounded-full object-cover"
                   src="https://images.unsplash.com/photo-1602934445884-da0fa1c9d3b3?q=80&w=1916&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                  alt="Logo"
+                  alt={settings?.storeName || "Logo"}
                   width={300}
                   height={300}
                 />
+                <span className="hidden sm:block text-lg font-bold text-gray-900 tracking-tight">
+                  {settings?.storeName || "ShopKart"}
+                </span>
               </Link>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8 w-full justify-center">
                 {navigation.map((item) => (
@@ -113,7 +125,7 @@ export default function Navbar() {
                     key={item.to}
                     to={item.to}
                     onClick={() => closeOnCurrent(item.to)}
-                    className="group my-auto inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 "
+                    className="group my-auto inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 "
                   >
                     {item.name}
                   </Link>
@@ -154,13 +166,13 @@ export default function Navbar() {
                         {user.firstName} {user.lastName}
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="cursor-pointer">
+                      <DropdownMenuItem className="cursor-pointer focus:bg-gray-100 focus:text-gray-900">
                         <Link to="/profile">Profile</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem >Subscription</DropdownMenuItem>
+                      <DropdownMenuItem className="focus:bg-gray-100 focus:text-gray-900">Subscription</DropdownMenuItem>
                       <DropdownMenuSeparator className='bg-slate-200' />
                       <DropdownMenuItem
-                        className="font-semibold cursor-pointer"
+                        className="font-semibold cursor-pointer focus:bg-gray-100 focus:text-gray-900"
                         onClick={() => {
                           logout();
                         }}

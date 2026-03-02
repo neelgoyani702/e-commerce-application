@@ -9,7 +9,7 @@ function HomeCategories() {
   async function getCategory() {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/category/get-category`,
+        `${process.env.REACT_APP_API_URL}/category/get-category?active=true`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -37,7 +37,7 @@ function HomeCategories() {
       {/* Section Header */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <p className="text-yellow-600 text-sm font-semibold tracking-widest uppercase mb-2">
+          <p className="text-store-primary text-sm font-semibold tracking-widest uppercase mb-2">
             Browse
           </p>
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
@@ -46,7 +46,7 @@ function HomeCategories() {
         </div>
         <Link
           to="/category"
-          className="hidden sm:flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-yellow-700 transition-colors group"
+          className="hidden sm:flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-store-primary-dark transition-colors group"
         >
           View All
           <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -66,7 +66,7 @@ function HomeCategories() {
       <div className="sm:hidden mt-6 text-center">
         <Link
           to="/category"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-yellow-700 hover:text-yellow-600"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-store-primary-dark hover:text-store-primary"
         >
           View All Categories
           <ArrowRight className="h-4 w-4" />

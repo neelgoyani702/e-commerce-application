@@ -22,7 +22,9 @@ import MyOrders from "./pages/user/MyOrders";
 import OrderHistory from "./pages/user/OrderHistory";
 import ChangePassword from "./pages/user/ChangePassword";
 import AllProducts from "./pages/user/AllProducts";
+import Wishlist from "./pages/user/Wishlist";
 import NotFound from "./pages/user/NotFound";
+import SettingsProvider from "./context/SettingsProvider";
 
 // Admin imports
 import AdminRoute from "./pages/admin/AdminRoute";
@@ -76,6 +78,10 @@ const router = createBrowserRouter([
           {
             path: 'change-password',
             element: <ChangePassword />
+          },
+          {
+            path: 'wishlist',
+            element: <Wishlist />
           }
         ],
       },
@@ -135,8 +141,10 @@ function App() {
   return (
     <>
       <AuthProvider>
-        <RouterProvider router={router} />
-        <Toaster richColors closeButton />
+        <SettingsProvider>
+          <RouterProvider router={router} />
+          <Toaster richColors closeButton />
+        </SettingsProvider>
       </AuthProvider>
     </>
   );

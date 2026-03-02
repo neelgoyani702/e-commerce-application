@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { AuthContext } from "../context/AuthProvider";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { User, MapPin, ShoppingBag, History, Lock, LogOut, ChevronRight, Shield } from 'lucide-react';
+import { User, MapPin, ShoppingBag, History, Lock, LogOut, ChevronRight, Shield, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 
 const navigation = [
@@ -10,6 +10,7 @@ const navigation = [
         items: [
             { name: "Personal Information", to: "", icon: User, description: "Name, email & phone" },
             { name: "Manage Addresses", to: "/addresses", icon: MapPin, description: "Shipping & billing" },
+            { name: "Wishlist", to: "/wishlist", icon: Heart, description: "Your saved products" },
             { name: "Change Password", to: "/change-password", icon: Lock, description: "Update your password" },
         ]
     },
@@ -71,7 +72,7 @@ function AccountSidebar() {
                         <img
                             src={user?.image}
                             alt={user?.firstName || "user"}
-                            className="w-12 h-12 rounded-full object-cover ring-2 ring-yellow-400/50 ring-offset-2"
+                            className="w-12 h-12 rounded-full object-cover ring-2 ring-store-primary ring-offset-2"
                         />
                         <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                     </div>
@@ -114,28 +115,28 @@ function AccountSidebar() {
                                         key={item.to}
                                         to={`/profile${item.to}`}
                                         className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ${active
-                                            ? "bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200/70 shadow-sm"
+                                            ? "bg-store-primary-light border border-store-primary shadow-sm"
                                             : "hover:bg-gray-50"
                                             }`}
                                     >
                                         <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${active
-                                            ? "bg-yellow-500 text-white shadow-sm shadow-yellow-200"
+                                            ? "bg-store-primary text-white shadow-sm shadow-store-primary"
                                             : "bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700"
                                             }`}>
                                             <Icon className="h-4 w-4" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-medium leading-tight ${active ? "text-yellow-900" : "text-gray-700 group-hover:text-gray-900"
+                                            <p className={`text-sm font-medium leading-tight ${active ? "text-store-primary-dark" : "text-gray-700 group-hover:text-gray-900"
                                                 }`}>
                                                 {item.name}
                                             </p>
-                                            <p className={`text-[11px] leading-tight mt-0.5 ${active ? "text-yellow-700/70" : "text-gray-400"
+                                            <p className={`text-[11px] leading-tight mt-0.5 ${active ? "text-store-primary-dark/70" : "text-gray-400"
                                                 }`}>
                                                 {item.description}
                                             </p>
                                         </div>
                                         <ChevronRight className={`h-3.5 w-3.5 transition-all duration-200 ${active
-                                            ? "text-yellow-500 translate-x-0"
+                                            ? "text-store-primary translate-x-0"
                                             : "text-gray-300 -translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
                                             }`} />
                                     </Link>

@@ -1,15 +1,83 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { IndianRupee, Heart, Star, ShoppingCart, ChevronRight, Truck, ShieldCheck, RotateCcw, Check } from "lucide-react";
+import { Heart, Star, ShoppingCart, ChevronRight, Truck, ShieldCheck, RotateCcw, Check, AlertTriangle, XCircle } from "lucide-react";
 import AddToCart from "../../components/AddToCart";
+import { SettingsContext } from "../../context/SettingsProvider";
+import { AuthContext } from "../../context/AuthProvider";
+import ProductCard from "../../components/ProductCard";
+import { addToRecentlyViewed, getRecentlyViewedIds } from "../../hooks/useRecentlyViewed";
 
 function ProductDetail() {
   const { productId } = useParams();
+  const { settings } = useContext(SettingsContext);
+  const { user } = useContext(AuthContext);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
   const [wishlisted, setWishlisted] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [userWishlist, setUserWishlist] = useState([]);
+
+  const currencySymbol = settings?.currencySymbol || '₹';
+
+  // Check if product is in user's wishlist
+  useEffect(() => {
+    if (!user || !productId) return;
+    async function checkWishlist() {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/user/wishlist`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        if (response.ok && data.wishlist) {
+          const ids = data.wishlist.map(p => p._id || p);
+          setUserWishlist(ids);
+          setWishlisted(ids.includes(productId));
+        }
+      } catch (error) {
+        // Silent fail for wishlist check
+      }
+    }
+    checkWishlist();
+  }, [user, productId]);
+
+  const toggleWishlist = async () => {
+    if (!user) {
+      toast.error("Please login to add to wishlist");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/user/wishlist/${productId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setWishlisted(data.action === "added");
+        setUserWishlist(prev =>
+          data.action === "added"
+            ? [...prev, productId]
+            : prev.filter(id => id !== productId)
+        );
+        toast.success(data.message);
+      } else {
+        toast.error(data.message || "Failed to update wishlist");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
 
   async function getProduct() {
     try {
@@ -46,10 +114,61 @@ function ProductDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
+  // Fetch related products + track recently viewed
+  useEffect(() => {
+    if (!productId) return;
+
+    // Track recently viewed
+    addToRecentlyViewed(productId);
+
+    // Fetch related products
+    async function fetchRelated() {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/product/get-product/${productId}/related`
+        );
+        const data = await response.json();
+        if (response.ok) {
+          setRelatedProducts(data.products || []);
+        }
+      } catch (error) {
+        // Silent fail
+      }
+    }
+
+    // Fetch recently viewed products
+    async function fetchRecentlyViewed() {
+      const ids = getRecentlyViewedIds().filter(id => id !== productId);
+      if (ids.length === 0) {
+        setRecentlyViewed([]);
+        return;
+      }
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/product/get-products`
+        );
+        const data = await response.json();
+        if (response.ok && data.products) {
+          const recentProducts = ids
+            .map(id => data.products.find(p => p._id === id))
+            .filter(Boolean)
+            .slice(0, 4);
+          setRecentlyViewed(recentProducts);
+        }
+      } catch (error) {
+        // Silent fail
+      }
+    }
+
+    fetchRelated();
+    fetchRecentlyViewed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId]);
+
   if (loading) {
     return (
       <div className="md:mt-16 mt-32 min-h-screen bg-gray-50/50 flex justify-center items-center py-32">
-        <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -64,7 +183,7 @@ function ProductDetail() {
         <p className="text-gray-400 text-sm mb-4">This product may have been removed</p>
         <Link
           to="/products"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-yellow-700 hover:text-yellow-600 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-store-primary-dark hover:text-store-primary transition-colors"
         >
           Browse all products →
         </Link>
@@ -108,12 +227,24 @@ function ProductDetail() {
           {/* Image */}
           <div className="lg:w-1/2">
             <div className="sticky top-28">
-              <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
+              <div className="relative bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
                 <img
-                  className="w-full h-[400px] sm:h-[500px] lg:h-[600px] object-cover object-center"
+                  className={`w-full h-[400px] sm:h-[500px] lg:h-[600px] object-cover object-center ${product.stock === 0 ? 'opacity-50 grayscale' : ''}`}
                   src={product.image}
                   alt={product.name}
                 />
+                {product.discount > 0 && product.stock !== 0 && (
+                  <span className="absolute top-4 right-4 bg-red-500 text-white text-sm font-bold px-3.5 py-1.5 rounded-full shadow-md">
+                    {product.discount}% OFF
+                  </span>
+                )}
+                {product.stock === 0 && (
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <span className="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-bold px-6 py-3 rounded-full uppercase tracking-wide shadow-lg">
+                      Out of Stock
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -125,7 +256,7 @@ function ProductDetail() {
               {product.category && (
                 <Link
                   to={`/category/${product.category._id}/products`}
-                  className="inline-flex self-start bg-yellow-50 text-yellow-800 text-xs font-semibold px-3.5 py-1.5 rounded-full capitalize hover:bg-yellow-100 transition-colors"
+                  className="inline-flex self-start bg-store-primary-light text-store-primary-dark text-xs font-semibold px-3.5 py-1.5 rounded-full capitalize hover:bg-store-primary-light transition-colors"
                 >
                   {product.category.name}
                 </Link>
@@ -140,26 +271,61 @@ function ProductDetail() {
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-0.5">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <Star key={i} className="h-4 w-4 fill-store-primary text-store-primary" />
                   ))}
                 </div>
                 <span className="text-sm text-gray-400 font-medium">5.0 (128 reviews)</span>
               </div>
 
               {/* Price */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <div className="flex items-baseline gap-1">
-                  <IndianRupee className="h-6 w-6 text-gray-900" />
-                  <span className="text-4xl font-extrabold text-gray-900">{product.price?.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <span className="text-sm text-green-600 font-medium flex items-center gap-1">
-                    <Check className="h-3.5 w-3.5" />
-                    In Stock
-                  </span>
-                  <span className="text-sm text-gray-400">Inclusive of all taxes</span>
-                </div>
-              </div>
+              {(() => {
+                const hasDiscount = product.discount > 0;
+                const discountedPrice = hasDiscount
+                  ? Math.round(product.price - (product.price * product.discount / 100))
+                  : product.price;
+                const savings = product.price - discountedPrice;
+                const outOfStock = product.stock === 0;
+                const lowStock = product.stock > 0 && product.stock <= 5;
+
+                return (
+                  <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-4xl font-extrabold text-gray-900">
+                        {currencySymbol}{discountedPrice.toLocaleString()}
+                      </span>
+                      {hasDiscount && (
+                        <span className="text-xl text-gray-400 line-through">
+                          {currencySymbol}{product.price?.toLocaleString()}
+                        </span>
+                      )}
+                      {hasDiscount && (
+                        <span className="text-sm font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+                          Save {currencySymbol}{savings.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 mt-2">
+                      {outOfStock ? (
+                        <span className="text-sm text-red-600 font-medium flex items-center gap-1">
+                          <XCircle className="h-3.5 w-3.5" />
+                          Out of Stock
+                        </span>
+                      ) : lowStock ? (
+                        <span className="text-sm text-amber-600 font-medium flex items-center gap-1">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          Only {product.stock} left — hurry!
+                        </span>
+                      ) : (
+                        <span className="text-sm text-green-600 font-medium flex items-center gap-1">
+                          <Check className="h-3.5 w-3.5" />
+                          In Stock
+                        </span>
+                      )}
+                      <span className="text-sm text-gray-400">Inclusive of all taxes</span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Description */}
               {product.description && (
@@ -176,8 +342,8 @@ function ProductDetail() {
                   <ul className="space-y-2.5">
                     {product.bulletPoints.map((point, index) => (
                       <li key={index} className="flex items-start gap-3 text-gray-500 text-sm">
-                        <div className="h-5 w-5 rounded-full bg-yellow-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="h-3 w-3 text-yellow-600" />
+                        <div className="h-5 w-5 rounded-full bg-store-primary-light flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="h-3 w-3 text-store-primary" />
                         </div>
                         {point}
                       </li>
@@ -196,8 +362,8 @@ function ProductDetail() {
                         key={index}
                         onClick={() => setSelectedSize(size)}
                         className={`rounded-xl px-5 py-2.5 text-sm font-medium border transition-all duration-200 ${selectedSize === size
-                            ? "border-yellow-500 bg-yellow-50 text-yellow-800 shadow-sm"
-                            : "border-gray-200 bg-white text-gray-600 hover:border-yellow-400 hover:text-yellow-700"
+                          ? "border-store-primary bg-store-primary-light text-store-primary-dark shadow-sm"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-store-primary hover:text-store-primary-dark"
                           }`}
                       >
                         {size}
@@ -209,17 +375,27 @@ function ProductDetail() {
 
               {/* Actions */}
               <div className="flex flex-row gap-3 mt-2">
-                <AddToCart product={product} quantity={1} ATC={true}>
-                  <button className="flex-1 inline-flex items-center justify-center gap-2 py-4 text-base font-semibold bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white rounded-xl transition-all duration-300 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 hover:scale-[1.02]">
-                    <ShoppingCart className="h-5 w-5" />
-                    Add to Cart
+                {product.stock === 0 ? (
+                  <button
+                    disabled
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-4 text-base font-semibold bg-gray-200 text-gray-500 rounded-xl cursor-not-allowed"
+                  >
+                    <XCircle className="h-5 w-5" />
+                    Out of Stock
                   </button>
-                </AddToCart>
+                ) : (
+                  <AddToCart product={product} quantity={1} ATC={true}>
+                    <button className="flex-1 inline-flex items-center justify-center gap-2 py-4 text-base font-semibold bg-store-gradient hover:bg-store-gradient-light text-white rounded-xl transition-all duration-300 shadow-lg shadow-store-primary hover:shadow-store-primary-lg hover:scale-[1.02]">
+                      <ShoppingCart className="h-5 w-5" />
+                      Add to Cart
+                    </button>
+                  </AddToCart>
+                )}
                 <button
-                  onClick={() => setWishlisted(!wishlisted)}
+                  onClick={toggleWishlist}
                   className={`px-5 py-4 rounded-xl border-2 transition-all duration-300 ${wishlisted
-                      ? "border-red-200 bg-red-50 text-red-500"
-                      : "border-gray-200 bg-white text-gray-400 hover:text-red-500 hover:border-red-200"
+                    ? "border-red-200 bg-red-50 text-red-500"
+                    : "border-gray-200 bg-white text-gray-400 hover:text-red-500 hover:border-red-200"
                     }`}
                 >
                   <Heart className={`h-5 w-5 ${wishlisted ? "fill-red-500" : ""}`} />
@@ -234,7 +410,7 @@ function ProductDetail() {
                   { icon: RotateCcw, title: "Easy Returns", desc: "30-day policy" },
                 ].map((item, i) => (
                   <div key={i} className="bg-white rounded-xl border border-gray-100 p-3 text-center">
-                    <item.icon className="h-5 w-5 text-yellow-600 mx-auto mb-1.5" />
+                    <item.icon className="h-5 w-5 text-store-primary mx-auto mb-1.5" />
                     <p className="text-xs font-semibold text-gray-900">{item.title}</p>
                     <p className="text-[11px] text-gray-400">{item.desc}</p>
                   </div>
@@ -244,6 +420,30 @@ function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 py-12 border-t">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">You May Also Like</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {relatedProducts.map((p) => (
+              <ProductCard key={p._id} product={p} wishlist={userWishlist} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recently Viewed */}
+      {recentlyViewed.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 py-12 border-t">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Recently Viewed</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {recentlyViewed.map((p) => (
+              <ProductCard key={p._id} product={p} wishlist={userWishlist} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

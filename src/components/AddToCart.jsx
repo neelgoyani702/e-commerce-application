@@ -31,7 +31,11 @@ function AddToCart(props) {
             }
 
             if (data.cart) {
-                toast.success(data.message || "Product added to cart");
+                if (data.stockCapped) {
+                    toast.warning(data.message);
+                } else {
+                    toast.success(data.message || "Product added to cart");
+                }
                 if (!ATC && handleChangeCartItems) {
                     handleChangeCartItems(product, quantity);
                 }

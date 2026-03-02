@@ -272,7 +272,7 @@ function DeleteUpdateAddress({ address, handleUpdateAddress, handleDeleteAddress
                             <div className="flex gap-3">
                                 <Button
                                     type="submit"
-                                    className="bg-yellow-600 hover:bg-yellow-500 py-5"
+                                    className="bg-store-primary hover:bg-store-primary py-5"
                                 >
                                     Save Changes
                                 </Button>

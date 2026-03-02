@@ -67,8 +67,8 @@ function UserAddress() {
         <div className='py-6 px-4 md:px-8'>
             {/* Header */}
             <div className='flex items-center gap-3 mb-8'>
-                <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                    <MapPinnedIcon size={24} className='text-yellow-700' />
+                <div className="h-12 w-12 rounded-full bg-store-primary-light flex items-center justify-center">
+                    <MapPinnedIcon size={24} className='text-store-primary-dark' />
                 </div>
                 <div>
                     <h1 className='text-2xl font-bold'>Your Addresses</h1>
@@ -81,11 +81,11 @@ function UserAddress() {
                 {/* Add Address Card */}
                 <Dialog>
                     <DialogTrigger asChild>
-                        <div className='min-h-[220px] border-2 border-dashed border-gray-300 rounded-xl cursor-pointer flex flex-col justify-center items-center hover:border-yellow-500 hover:bg-yellow-50/50 transition-all duration-300 group'>
-                            <div className="h-14 w-14 rounded-full bg-gray-100 group-hover:bg-yellow-100 flex items-center justify-center mb-3 transition-colors">
-                                <Plus size={28} className='text-gray-400 group-hover:text-yellow-600 transition-colors' />
+                        <div className='min-h-[220px] border-2 border-dashed border-gray-300 rounded-xl cursor-pointer flex flex-col justify-center items-center hover:border-store-primary hover:bg-store-primary/5 transition-all duration-300 group'>
+                            <div className="h-14 w-14 rounded-full bg-gray-100 group-hover:bg-store-primary-light flex items-center justify-center mb-3 transition-colors">
+                                <Plus size={28} className='text-gray-400 group-hover:text-store-primary transition-colors' />
                             </div>
-                            <h3 className='text-base font-medium text-gray-600 group-hover:text-yellow-700 transition-colors'>Add New Address</h3>
+                            <h3 className='text-base font-medium text-gray-600 group-hover:text-store-primary-dark transition-colors'>Add New Address</h3>
                         </div>
                     </DialogTrigger>
                     <AddAdress handleAddAddress={handleAddAddress} />

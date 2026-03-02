@@ -22,7 +22,7 @@ function Category() {
     async function getCategory() {
         try {
             const response = await fetch(
-                `${process.env.REACT_APP_API_URL}/category/get-category`,
+                `${process.env.REACT_APP_API_URL}/category/get-category?active=true`,
                 {
                     method: "GET",
                     headers: {
@@ -68,18 +68,18 @@ function Category() {
             {/* Hero Section */}
             <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
                 {/* Decorative */}
-                <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-72 h-72 bg-yellow-500/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
+                <div className="absolute top-0 right-0 w-96 h-96 bg-store-primary/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-72 h-72 bg-store-primary/5 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
 
                 <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 md:py-20">
                     <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
                         <Link to="/" className="hover:text-white transition-colors">Home</Link>
                         <span className="text-gray-600">/</span>
-                        <span className="text-yellow-400 font-medium">Categories</span>
+                        <span className="text-store-primary font-medium">Categories</span>
                     </nav>
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div className="flex items-center gap-4">
-                            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+                            <div className="h-14 w-14 rounded-2xl bg-store-gradient flex items-center justify-center shadow-lg shadow-store-primary">
                                 <LayoutGrid className="h-7 w-7 text-white" />
                             </div>
                             <div>
@@ -98,7 +98,7 @@ function Category() {
                                 placeholder="Search categories..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/30 focus:border-yellow-500/50 transition-all"
+                                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-store-primary focus:border-store-primary/50 transition-all"
                             />
                         </div>
                     </div>
@@ -131,7 +131,7 @@ function Category() {
                 {/* Loading */}
                 {loading && (
                     <div className="flex justify-center py-20">
-                        <div className="h-10 w-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 )}
 

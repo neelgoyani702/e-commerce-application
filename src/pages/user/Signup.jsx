@@ -3,12 +3,14 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthProvider";
+import { SettingsContext } from "../../context/SettingsProvider";
 import { toast } from "sonner";
 import { Mail, Lock, User, ArrowRight, ShoppingBag, Truck, ShieldCheck, Star, Gift } from "lucide-react";
 
 function Signup() {
   const navigate = useNavigate();
   const { user, setUser } = useContext(AuthContext);
+  const { settings } = useContext(SettingsContext);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -84,18 +86,18 @@ function Signup() {
       {/* Left Panel — Brand */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
         {/* Decorative */}
-        <div className="absolute top-10 right-10 w-80 h-80 bg-yellow-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 -left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 left-1/4 w-48 h-48 bg-yellow-500/5 rounded-full blur-2xl" />
+        <div className="absolute top-10 right-10 w-80 h-80 bg-store-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 -left-10 w-72 h-72 bg-store-primary/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 left-1/4 w-48 h-48 bg-store-primary/5 rounded-full blur-2xl" />
 
         <div className="relative z-10 flex flex-col justify-between w-full p-12">
           {/* Top — Logo */}
           <div>
             <Link to="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-store-primary rounded-xl flex items-center justify-center">
                 <ShoppingBag className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">bon ton</span>
+              <span className="text-xl font-bold text-white">{settings?.storeName || "ShopKart"}</span>
             </Link>
           </div>
 
@@ -104,7 +106,7 @@ function Signup() {
             <div>
               <h2 className="text-4xl font-bold text-white leading-tight">
                 Join the<br />
-                <span className="text-yellow-400">bon ton</span> family
+                <span className="text-store-primary">{settings?.storeName || "ShopKart"}</span> family
               </h2>
               <p className="text-gray-400 mt-4 text-lg max-w-md">
                 Create an account to unlock exclusive deals, track orders, and enjoy a premium shopping experience.
@@ -121,7 +123,7 @@ function Signup() {
               ].map((badge, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                    <badge.icon className="h-5 w-5 text-yellow-400" />
+                    <badge.icon className="h-5 w-5 text-store-primary" />
                   </div>
                   <span className="text-gray-300 text-sm">{badge.text}</span>
                 </div>
@@ -137,7 +139,7 @@ function Signup() {
               { value: "4.9★", label: "Rating" },
             ].map((stat, i) => (
               <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-xl font-bold text-yellow-400">{stat.value}</p>
+                <p className="text-xl font-bold text-store-primary">{stat.value}</p>
                 <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
               </div>
             ))}
@@ -151,10 +153,10 @@ function Signup() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center">
             <Link to="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-store-primary rounded-xl flex items-center justify-center">
                 <ShoppingBag className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">bon ton</span>
+              <span className="text-xl font-bold text-gray-900">{settings?.storeName || "ShopKart"}</span>
             </Link>
           </div>
 
@@ -181,7 +183,7 @@ function Signup() {
                     name="firstName"
                     placeholder="John"
                     required
-                    className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all"
+                    className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary transition-all"
                   />
                 </div>
               </div>
@@ -197,7 +199,7 @@ function Signup() {
                     name="lastName"
                     placeholder="Doe"
                     required
-                    className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all"
+                    className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary transition-all"
                   />
                 </div>
               </div>
@@ -216,7 +218,7 @@ function Signup() {
                   name="email"
                   placeholder="you@example.com"
                   required
-                  className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all"
+                  className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary transition-all"
                 />
               </div>
             </div>
@@ -235,7 +237,7 @@ function Signup() {
                   placeholder="Min. 6 characters"
                   required
                   minLength={6}
-                  className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all"
+                  className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary transition-all"
                 />
               </div>
             </div>
@@ -243,7 +245,7 @@ function Signup() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-12 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 disabled:opacity-60 disabled:cursor-not-allowed mt-6"
+              className="w-full h-12 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-store-primary hover:shadow-store-primary-lg disabled:opacity-60 disabled:cursor-not-allowed mt-6"
             >
               {submitting ? (
                 <>
@@ -274,7 +276,7 @@ function Signup() {
             Already have an account?{" "}
             <Link
               to="/login"
-              className="font-semibold text-yellow-700 hover:text-yellow-600 transition-colors"
+              className="font-semibold text-store-primary-dark hover:text-store-primary transition-colors"
             >
               Sign in →
             </Link>
