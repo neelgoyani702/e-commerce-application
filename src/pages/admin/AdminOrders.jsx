@@ -809,7 +809,7 @@ function AdminOrders() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-gray-400">Subtotal</span>
                 <span className="text-xs text-gray-500">
-                  ₹{selectedOrder.totalAmount?.toLocaleString()}
+                  ₹{((selectedOrder.totalAmount || 0) + (selectedOrder.couponDiscount || 0)).toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between mb-2">
@@ -818,6 +818,16 @@ function AdminOrders() {
                   Free
                 </span>
               </div>
+              {selectedOrder.couponCode && (
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-green-600">
+                    Coupon ({selectedOrder.couponCode})
+                  </span>
+                  <span className="text-xs text-green-600 font-medium">
+                    −₹{selectedOrder.couponDiscount?.toLocaleString()}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                 <span className="text-sm font-bold text-gray-900">Total</span>
                 <span className="text-sm font-bold text-gray-900 flex items-center">

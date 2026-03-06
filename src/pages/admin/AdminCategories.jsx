@@ -75,7 +75,7 @@ function AdminCategories() {
     try {
       const formData = new FormData();
       formData.append("name", form.name.trim());
-      if (form.image) formData.append("categoryImage", form.image);
+      if (form.image) formData.append("Image", form.image);
 
       const url = editing
         ? `${process.env.REACT_APP_API_URL}/category/update-category/${editing._id}`
@@ -212,8 +212,8 @@ function AdminCategories() {
               key={tab.key}
               onClick={() => setFilter(tab.key)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filter === tab.key
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white border border-gray-100 text-gray-500 hover:bg-gray-50"
+                ? "bg-indigo-600 text-white"
+                : "bg-white border border-gray-100 text-gray-500 hover:bg-gray-50"
                 }`}
             >
               {tab.label}
@@ -302,8 +302,8 @@ function AdminCategories() {
                     <button
                       onClick={() => toggleActive(cat)}
                       className={`inline-flex items-center gap-1.5 text-[11px] font-semibold py-1 px-2 rounded-md transition-colors ${isActive
-                          ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
-                          : "text-gray-400 bg-gray-50 hover:bg-gray-100"
+                        ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
+                        : "text-gray-400 bg-gray-50 hover:bg-gray-100"
                         }`}
                     >
                       {isActive ? (

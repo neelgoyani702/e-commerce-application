@@ -51,6 +51,7 @@ function AdminProducts() {
     name: "",
     description: "",
     price: "",
+    size: "",
     category: "",
     bulletPoints: [""],
     image: null,
@@ -98,6 +99,7 @@ function AdminProducts() {
       name: "",
       description: "",
       price: "",
+      size: "",
       category: categories[0]?.name || "",
       bulletPoints: [""],
       image: null,
@@ -110,13 +112,38 @@ function AdminProducts() {
 
   function openEdit(product) {
     setEditing(product);
+
+    // Normalize bulletPoints — fix any double-encoded or comma-joined data
+    let normalizedBP = [""];
+    if (product.bulletPoints?.length > 0) {
+      normalizedBP = product.bulletPoints.flatMap((bp) => {
+        if (typeof bp === "string") {
+          const trimmed = bp.trim();
+          // Handle double-encoded JSON: ["[\"a\",\"b\"]"]
+          if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (Array.isArray(parsed)) return parsed.map((s) => String(s).trim()).filter(Boolean);
+            } catch { /* not JSON, use as-is */ }
+          }
+          // Handle comma-joined: ["a,b,c"]
+          if (trimmed.includes(",") && !trimmed.includes('"')) {
+            return trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+          }
+          return trimmed ? [trimmed] : [];
+        }
+        return [String(bp)];
+      }).filter(Boolean);
+      if (normalizedBP.length === 0) normalizedBP = [""];
+    }
+
     setForm({
       name: product.name || "",
       description: product.description || "",
       price: product.price || "",
+      size: product.size || "",
       category: product.category?.name || product.category || "",
-      bulletPoints:
-        product.bulletPoints?.length > 0 ? product.bulletPoints : [""],
+      bulletPoints: normalizedBP,
       image: null,
       stock: product.stock ?? "",
       discount: product.discount ?? "",
@@ -138,13 +165,14 @@ function AdminProducts() {
       formData.append("name", form.name.trim());
       formData.append("description", form.description?.trim() || "");
       formData.append("price", form.price);
+      formData.append("size", form.size);
       formData.append("category", form.category.toLowerCase());
       formData.append("stock", form.stock || 0);
       formData.append("discount", form.discount || 0);
       formData.append("featured", form.featured);
       const bp = form.bulletPoints.filter((b) => b.trim());
       if (bp.length) formData.append("bulletPoints", JSON.stringify(bp));
-      if (form.image) formData.append("productImage", form.image);
+      if (form.image) formData.append("Image", form.image);
 
       const url = editing
         ? `${process.env.REACT_APP_API_URL}/product/update-product/${editing._id}`
@@ -331,6 +359,7 @@ function AdminProducts() {
       "Name",
       "Category",
       "Price",
+      "Size",
       "Stock",
       "Discount (%)",
       "Featured",
@@ -339,6 +368,7 @@ function AdminProducts() {
       `"${p.name}"`,
       p.category?.name || p.category || "",
       p.price,
+      p.size,
       p.stock ?? 0,
       p.discount || 0,
       p.featured ? "Yes" : "No",
@@ -553,8 +583,8 @@ function AdminProducts() {
                   <tr
                     key={product._id}
                     className={`hover:bg-indigo-50/30 transition-colors ${selectedIds.includes(product._id)
-                        ? "bg-indigo-50/20"
-                        : ""
+                      ? "bg-indigo-50/20"
+                      : ""
                       }`}
                   >
                     <td className="px-4 py-3">
@@ -598,10 +628,10 @@ function AdminProducts() {
                     <td className="px-4 py-3">
                       <span
                         className={`text-xs font-bold ${product.stock === 0
-                            ? "text-red-500"
-                            : product.stock <= 5
-                              ? "text-amber-500"
-                              : "text-gray-900"
+                          ? "text-red-500"
+                          : product.stock <= 5
+                            ? "text-amber-500"
+                            : "text-gray-900"
                           }`}
                       >
                         {product.stock ?? 0}
@@ -689,8 +719,8 @@ function AdminProducts() {
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
                     className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${page === pageNum
-                        ? "bg-indigo-600 text-white"
-                        : "text-gray-400 hover:bg-gray-100"
+                      ? "bg-indigo-600 text-white"
+                      : "text-gray-400 hover:bg-gray-100"
                       }`}
                   >
                     {pageNum}
@@ -773,8 +803,8 @@ function AdminProducts() {
                   </p>
                   <p
                     className={`text-sm font-bold ${(selectedProduct.stock ?? 0) === 0
-                        ? "text-red-500"
-                        : "text-gray-900"
+                      ? "text-red-500"
+                      : "text-gray-900"
                       }`}
                   >
                     {selectedProduct.stock ?? 0}
@@ -822,24 +852,38 @@ function AdminProducts() {
                   </span>
                 </div>
               </div>
-              {selectedProduct.bulletPoints?.length > 0 && (
-                <div>
-                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">
-                    Highlights
-                  </p>
-                  <ul className="space-y-1.5">
-                    {selectedProduct.bulletPoints.map((bp, i) => (
-                      <li
-                        key={i}
-                        className="text-xs text-gray-600 flex items-start gap-2"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1 flex-shrink-0" />
-                        {bp}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {selectedProduct.bulletPoints?.length > 0 && (() => {
+                // Normalize for display
+                const normalizedBP = selectedProduct.bulletPoints.flatMap((bp) => {
+                  if (typeof bp === "string") {
+                    const t = bp.trim();
+                    if (t.startsWith("[") && t.endsWith("]")) {
+                      try { const p = JSON.parse(t); if (Array.isArray(p)) return p.map(s => String(s).trim()).filter(Boolean); } catch { }
+                    }
+                    if (t.includes(",") && !t.includes('"')) return t.split(",").map(s => s.trim()).filter(Boolean);
+                    return t ? [t] : [];
+                  }
+                  return [String(bp)];
+                }).filter(Boolean);
+                return normalizedBP.length > 0 ? (
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">
+                      Highlights
+                    </p>
+                    <ul className="space-y-1.5">
+                      {normalizedBP.map((bp, i) => (
+                        <li
+                          key={i}
+                          className="text-xs text-gray-600 flex items-start gap-2"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1 flex-shrink-0" />
+                          {bp}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
         </>
@@ -905,6 +949,19 @@ function AdminProducts() {
                       value={form.price}
                       onChange={(e) =>
                         setForm({ ...form, price: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                      size
+                    </label>
+                    <input
+                      type="string"
+                      value={form.size}
+                      onChange={(e) =>  
+                        setForm({ ...form, size: e.target.value })
                       }
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     />

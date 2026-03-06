@@ -12,6 +12,8 @@ import {
   Truck,
   CreditCard,
   Check,
+  Tag,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -28,6 +30,9 @@ function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   // Fetch cart
   async function getCart() {
@@ -90,6 +95,9 @@ function Checkout() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({
+          couponCode: appliedCoupon?.code || null,
+        }),
       });
 
       toast.dismiss(toastId);
@@ -169,8 +177,8 @@ function Checkout() {
             <React.Fragment key={i}>
               <div className="flex items-center gap-2">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${step.done
-                    ? "bg-store-gradient text-white shadow-md shadow-store-primary"
-                    : "bg-gray-100 text-gray-400"
+                  ? "bg-store-gradient text-white shadow-md shadow-store-primary"
+                  : "bg-gray-100 text-gray-400"
                   }`}>
                   {step.done ? <Check className="h-4 w-4" /> : i + 1}
                 </div>
@@ -233,8 +241,8 @@ function Checkout() {
                         key={address._id}
                         onClick={() => setSelectedAddress(address._id)}
                         className={`rounded-xl p-4 cursor-pointer transition-all duration-200 border-2 ${selectedAddress === address._id
-                            ? "border-store-primary bg-store-primary/5 shadow-sm"
-                            : "border-gray-100 hover:border-gray-200 bg-white"
+                          ? "border-store-primary bg-store-primary/5 shadow-sm"
+                          : "border-gray-100 hover:border-gray-200 bg-white"
                           }`}
                       >
                         <div className="flex items-start justify-between">
@@ -261,8 +269,8 @@ function Checkout() {
                           </div>
                           <div
                             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${selectedAddress === address._id
-                                ? "border-store-primary"
-                                : "border-gray-300"
+                              ? "border-store-primary"
+                              : "border-gray-300"
                               }`}
                           >
                             {selectedAddress === address._id && (
@@ -345,20 +353,96 @@ function Checkout() {
                     <span className="text-gray-500">Delivery</span>
                     <span className="text-green-600 font-semibold">FREE</span>
                   </div>
+
+                  {/* Coupon / Promo Code */}
+                  <div className="border-t border-dashed border-gray-200 my-3" />
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between bg-green-50 rounded-xl px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-3.5 w-3.5 text-green-600" />
+                        <div>
+                          <span className="text-xs font-bold text-green-700">{appliedCoupon.code}</span>
+                          <p className="text-[10px] text-green-600">
+                            {appliedCoupon.discountType === "percentage"
+                              ? `${appliedCoupon.discountValue}% off`
+                              : `₹${appliedCoupon.discountValue} off`}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => { setAppliedCoupon(null); setCouponCode(""); toast.success("Coupon removed"); }}
+                        className="text-green-600 hover:text-green-800 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-300" />
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          placeholder="Promo code"
+                          className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-xs font-medium placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-store-primary/20 focus:border-store-primary uppercase"
+                        />
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (!couponCode.trim()) return;
+                          setValidatingCoupon(true);
+                          try {
+                            const res = await fetch(`${process.env.REACT_APP_API_URL}/coupon/validate`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              credentials: "include",
+                              body: JSON.stringify({ code: couponCode, orderAmount: cart.totalAmount }),
+                            });
+                            const data = await res.json();
+                            if (res.ok) {
+                              setAppliedCoupon(data.coupon);
+                              toast.success(data.message);
+                            } else {
+                              toast.error(data.message);
+                            }
+                          } catch { toast.error("Failed to validate coupon"); }
+                          finally { setValidatingCoupon(false); }
+                        }}
+                        disabled={!couponCode.trim() || validatingCoupon}
+                        className="px-4 py-2.5 text-xs font-semibold text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: 'linear-gradient(to right, var(--store-primary, #eab308), var(--store-accent, #f59e0b))' }}
+                      >
+                        {validatingCoupon ? "..." : "Apply"}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Discount line */}
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-600">Coupon Discount</span>
+                      <div className="flex items-center font-medium text-green-600">
+                        −<IndianRupee className="h-3.5 w-3.5" />
+                        <span>{appliedCoupon.discount?.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="border-t border-dashed border-gray-200 my-3" />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
                     <div className="flex items-center">
                       <IndianRupee className="h-4 w-4" />
-                      <span>{cart.totalAmount?.toLocaleString()}</span>
+                      <span>{((cart.totalAmount || 0) - (appliedCoupon?.discount || 0)).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
 
                 <button
                   className={`w-full mt-6 py-4 font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-base ${placingOrder || !selectedAddress
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-store-gradient hover:bg-store-gradient-light text-white shadow-lg shadow-store-primary hover:shadow-store-primary-lg"
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-store-gradient hover:bg-store-gradient-light text-white shadow-lg shadow-store-primary hover:shadow-store-primary-lg"
                     }`}
                   onClick={placeOrder}
                   disabled={placingOrder || !selectedAddress}

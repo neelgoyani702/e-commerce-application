@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Clock,
 } from "lucide-react";
+import { SkeletonOrderCard } from "../../components/SkeletonCard";
 
 function MyOrders() {
   const { user } = useContext(AuthContext);
@@ -91,8 +92,10 @@ function MyOrders() {
 
       {/* Loading */}
       {loading && (
-        <div className="flex justify-center py-16">
-          <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <SkeletonOrderCard key={i} />
+          ))}
         </div>
       )}
 
@@ -195,9 +198,16 @@ function MyOrders() {
 
               {/* Order Footer */}
               <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-100 mt-3">
-                <span className="text-xs text-gray-400">
-                  {order.totalItems} {order.totalItems === 1 ? "item" : "items"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">
+                    {order.totalItems} {order.totalItems === 1 ? "item" : "items"}
+                  </span>
+                  {order.couponCode && (
+                    <span className="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-md font-semibold">
+                      {order.couponCode} (−₹{order.couponDiscount?.toLocaleString()})
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-1 font-bold">
                   <span className="text-gray-400 text-xs mr-1">Total:</span>
                   <IndianRupee className="h-3.5 w-3.5" />

@@ -12,6 +12,7 @@ import {
 } from "../../components/ui/select";
 import { ArrowUpDown, Package, ArrowLeft } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
+import { SkeletonCard } from '../../components/SkeletonCard';
 import { AuthContext } from '../../context/AuthProvider';
 
 function CategoryProducts() {
@@ -149,7 +150,10 @@ function CategoryProducts() {
             {/* Loading hero placeholder */}
             {!category && loading && (
                 <div className="h-72 md:h-96 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-                    <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
+                    <div className="space-y-3 text-center">
+                      <div className="h-8 w-48 bg-gray-700 rounded-lg mx-auto animate-pulse" />
+                      <div className="h-4 w-32 bg-gray-700/60 rounded mx-auto animate-pulse" />
+                    </div>
                 </div>
             )}
 
@@ -178,10 +182,12 @@ function CategoryProducts() {
                     </div>
                 </div>
 
-                {/* Loading */}
+                {/* Loading Skeletons */}
                 {loading && (
-                    <div className="flex justify-center py-20">
-                        <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-12">
+                        {[...Array(8)].map((_, i) => (
+                            <SkeletonCard key={i} />
+                        ))}
                     </div>
                 )}
 

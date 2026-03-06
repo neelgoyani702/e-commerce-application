@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Heart, Trash2, ArrowRight } from "lucide-react";
 import ProductCard from "../../components/ProductCard";
+import { SkeletonCard } from "../../components/SkeletonCard";
 
 function Wishlist() {
   const { user } = useContext(AuthContext);
@@ -69,8 +70,10 @@ function Wishlist() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-32">
-        <div className="h-8 w-8 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-6">
+        {[...Array(6)].map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
     );
   }

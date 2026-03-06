@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import ProductCard from "../../components/ProductCard";
+import { SkeletonCard } from "../../components/SkeletonCard";
 import { AuthContext } from "../../context/AuthProvider";
 
 function AllProducts() {
@@ -288,10 +289,12 @@ function AllProducts() {
           </div>
         </div>
 
-        {/* Loading */}
+        {/* Loading Skeletons */}
         {loading && (
-          <div className="flex justify-center py-20">
-            <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-12">
+            {[...Array(8)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         )}
 

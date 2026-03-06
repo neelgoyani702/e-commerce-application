@@ -12,6 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { LayoutGrid, ArrowUpDown, Search } from "lucide-react";
+import { SkeletonCategoryCard } from "../../components/SkeletonCard";
 
 function Category() {
     const [categories, setCategories] = useState([]);
@@ -130,8 +131,10 @@ function Category() {
 
                 {/* Loading */}
                 {loading && (
-                    <div className="flex justify-center py-20">
-                        <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-12">
+                        {[...Array(8)].map((_, i) => (
+                            <SkeletonCategoryCard key={i} />
+                        ))}
                     </div>
                 )}
 

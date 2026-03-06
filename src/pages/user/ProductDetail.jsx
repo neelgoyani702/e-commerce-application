@@ -19,6 +19,10 @@ function ProductDetail() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [userWishlist, setUserWishlist] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
+  const [reviewDistribution, setReviewDistribution] = useState({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   const currencySymbol = settings?.currencySymbol || '₹';
 
@@ -79,6 +83,23 @@ function ProductDetail() {
     }
   };
 
+  // Fetch reviews for this product
+  async function fetchReviews() {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/review/${productId}`
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setReviews(data.reviews || []);
+        setReviewStats(data.stats || { averageRating: 0, totalReviews: 0 });
+        setReviewDistribution(data.distribution || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+      }
+    } catch (error) {
+      // silent
+    }
+  }
+
   async function getProduct() {
     try {
       const response = await fetch(
@@ -111,6 +132,7 @@ function ProductDetail() {
 
   useEffect(() => {
     getProduct();
+    fetchReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
@@ -270,11 +292,15 @@ function ProductDetail() {
               {/* Rating */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-store-primary text-store-primary" />
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} className={`h-4 w-4 ${s <= Math.round(reviewStats.averageRating) ? 'fill-store-primary text-store-primary' : 'text-gray-200'}`} />
                   ))}
                 </div>
-                <span className="text-sm text-gray-400 font-medium">5.0 (128 reviews)</span>
+                <span className="text-sm text-gray-400 font-medium">
+                  {reviewStats.totalReviews > 0
+                    ? `${reviewStats.averageRating.toFixed(1)} (${reviewStats.totalReviews} ${reviewStats.totalReviews === 1 ? 'review' : 'reviews'})`
+                    : 'No reviews yet'}
+                </span>
               </div>
 
               {/* Price */}
@@ -336,21 +362,35 @@ function ProductDetail() {
               )}
 
               {/* Bullet Points */}
-              {product.bulletPoints && product.bulletPoints.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Highlights</h3>
-                  <ul className="space-y-2.5">
-                    {product.bulletPoints.map((point, index) => (
-                      <li key={index} className="flex items-start gap-3 text-gray-500 text-sm">
-                        <div className="h-5 w-5 rounded-full bg-store-primary-light flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="h-3 w-3 text-store-primary" />
-                        </div>
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {product.bulletPoints && product.bulletPoints.length > 0 && (() => {
+                // Normalize corrupted bulletPoints
+                const normalized = product.bulletPoints.flatMap((bp) => {
+                  if (typeof bp === "string") {
+                    const t = bp.trim();
+                    if (t.startsWith("[") && t.endsWith("]")) {
+                      try { const p = JSON.parse(t); if (Array.isArray(p)) return p.map(s => String(s).trim()).filter(Boolean); } catch { }
+                    }
+                    if (t.includes(",") && !t.includes('"')) return t.split(",").map(s => s.trim()).filter(Boolean);
+                    return t ? [t] : [];
+                  }
+                  return [String(bp)];
+                }).filter(Boolean);
+                return normalized.length > 0 ? (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Highlights</h3>
+                    <ul className="space-y-2.5">
+                      {normalized.map((point, index) => (
+                        <li key={index} className="flex items-start gap-3 text-gray-500 text-sm">
+                          <div className="h-5 w-5 rounded-full bg-store-primary-light flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="h-3 w-3 text-store-primary" />
+                          </div>
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null;
+              })()}
 
               {/* Size */}
               {sizes.length > 0 && (
@@ -420,6 +460,103 @@ function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Reviews & Ratings Section */}
+      <section className="max-w-7xl mx-auto px-6 py-12 border-t">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8">Reviews & Ratings</h2>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Rating Summary */}
+          <div className="bg-gray-50 rounded-2xl p-6">
+            <div className="text-center mb-4">
+              <p className="text-5xl font-extrabold text-gray-900">
+                {reviewStats.averageRating ? reviewStats.averageRating.toFixed(1) : "0.0"}
+              </p>
+              <div className="flex justify-center gap-0.5 mt-2">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className={`h-5 w-5 ${s <= Math.round(reviewStats.averageRating) ? "text-amber-400 fill-amber-400" : "text-gray-200"}`}
+                  />
+                ))}
+              </div>
+              <p className="text-sm text-gray-400 mt-1">
+                {reviewStats.totalReviews} {reviewStats.totalReviews === 1 ? "review" : "reviews"}
+              </p>
+            </div>
+            {/* Distribution bars */}
+            <div className="space-y-2">
+              {[5, 4, 3, 2, 1].map((star) => {
+                const count = reviewDistribution[star] || 0;
+                const percentage = reviewStats.totalReviews > 0 ? (count / reviewStats.totalReviews) * 100 : 0;
+                return (
+                  <div key={star} className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-500 w-3">{star}</span>
+                    <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-400 w-6 text-right">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Review List */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Reviews List */}
+            {reviews.length > 0 ? (
+              <div className="space-y-4">
+                {(showAllReviews ? reviews : reviews.slice(0, 2)).map((review) => (
+                  <div key={review._id} className="bg-white border border-gray-100 rounded-xl p-5">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-1 mb-1">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              className={`h-3.5 w-3.5 ${s <= review.rating ? "text-amber-400 fill-amber-400" : "text-gray-200"}`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {review.userId?.firstName} {review.userId?.lastName}
+                        </p>
+                      </div>
+                      <span className="text-[11px] text-gray-400">
+                        {new Date(review.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric", month: "short", year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-gray-500 mt-2 leading-relaxed">{review.comment}</p>
+                    )}
+                  </div>
+                ))}
+                {reviews.length > 2 && (
+                  <button
+                    onClick={() => setShowAllReviews(!showAllReviews)}
+                    className="w-full py-2.5 text-xs font-semibold text-store-primary hover:text-store-primary-dark bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+                  >
+                    {showAllReviews ? "Show Less" : `View All ${reviews.length} Reviews`}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Star className="h-8 w-8 text-gray-200 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">No reviews yet. Be the first to review!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SettingsContext } from '../context/SettingsProvider';
 import { AuthContext } from '../context/AuthProvider';
@@ -9,7 +9,7 @@ function ProductCard({ product, wishlist = [], onWishlistToggle }) {
 
     const { settings } = useContext(SettingsContext);
     const { user } = useContext(AuthContext);
-    const { _id, name, description, price, image, category, discount, stock } = product;
+    const { _id, name, description, price, image, category, discount, stock, avgRating, reviewCount } = product;
 
     const hasDiscount = discount > 0;
     const discountedPrice = hasDiscount ? Math.round(price - (price * discount / 100)) : price;
@@ -120,6 +120,21 @@ function ProductCard({ product, wishlist = [], onWishlistToggle }) {
                     >
                         {name}
                     </h3>
+                    {reviewCount > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                            <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                        key={s}
+                                        className={`h-3 w-3 ${s <= Math.round(avgRating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`}
+                                    />
+                                ))}
+                            </div>
+                            <span className="text-[11px] text-gray-400 font-medium">
+                                {avgRating?.toFixed(1)} ({reviewCount})
+                            </span>
+                        </div>
+                    )}
                     <p className="text-gray-400 text-sm mt-1.5 line-clamp-2 flex-1 leading-relaxed">
                         {description}
                     </p>
