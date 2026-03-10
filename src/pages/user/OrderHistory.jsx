@@ -331,6 +331,9 @@ function OrderHistory() {
                             >
                               {item.productId?.name || "Product"}
                             </h3>
+                            {item.variantLabel && (
+                              <p className="text-[11px] text-gray-500 font-medium mt-0.5">{item.variantLabel}</p>
+                            )}
                             <p className="text-xs text-gray-400 mt-0.5">
                               Qty: {item.quantity}
                             </p>

@@ -10,8 +10,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../../components/ui/select";
-import { ArrowUpDown, Package, ArrowLeft } from 'lucide-react';
+import { ArrowUpDown, Package, ArrowLeft, LayoutGrid } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
+import CategoryCard from '../../components/CategoryCard.jsx';
 import { SkeletonCard } from '../../components/SkeletonCard';
 import { AuthContext } from '../../context/AuthProvider';
 
@@ -22,6 +23,7 @@ function CategoryProducts() {
 
     const [products, setProducts] = useState([]);
     const [category, setCategory] = useState(null);
+    const [subCategories, setSubCategories] = useState([]);
     const [sort, setSort] = useState("name-asc");
     const [loading, setLoading] = useState(true);
     const { user } = useContext(AuthContext);
@@ -52,6 +54,7 @@ function CategoryProducts() {
     };
 
     async function getCategoryProducts() {
+        setLoading(true);
         try {
             const response = await fetch(
                 `${process.env.REACT_APP_API_URL}/category/${categoryId}/products`,
@@ -68,6 +71,7 @@ function CategoryProducts() {
             if (response.ok) {
                 setProducts(data.products.sort((a, b) => a.name.localeCompare(b.name)));
                 setCategory(data.category);
+                setSubCategories(data.subCategories || []);
             } else {
                 toast.error(data.message || "Failed to fetch products");
             }
@@ -81,6 +85,7 @@ function CategoryProducts() {
 
     useEffect(() => {
         getCategoryProducts();
+        setSort("name-asc");
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [categoryId]);
 
@@ -96,6 +101,9 @@ function CategoryProducts() {
             setProducts([...products].sort((a, b) => b.price - a.price));
         }
     }
+
+    const isSubCategory = category?.parentId != null;
+    const hasSubCategories = subCategories.length > 0;
 
     return (
         <div className='md:mt-16 mt-32 min-h-screen bg-gray-50/50'>
@@ -116,6 +124,17 @@ function CategoryProducts() {
                                 <Link to="/" className="hover:text-white transition-colors">Home</Link>
                                 <span className="text-gray-500">/</span>
                                 <Link to="/category" className="hover:text-white transition-colors">Categories</Link>
+                                {isSubCategory && category.parentId && (
+                                    <>
+                                        <span className="text-gray-500">/</span>
+                                        <Link
+                                            to={`/category/${typeof category.parentId === 'object' ? category.parentId._id : category.parentId}/products`}
+                                            className="hover:text-white transition-colors capitalize"
+                                        >
+                                            {typeof category.parentId === 'object' ? category.parentId.name : 'Parent'}
+                                        </Link>
+                                    </>
+                                )}
                                 <span className="text-gray-500">/</span>
                                 <span className="text-store-primary font-medium capitalize">{category.name}</span>
                             </nav>
@@ -123,23 +142,29 @@ function CategoryProducts() {
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                                 <div>
                                     <p className="text-store-primary text-sm font-semibold tracking-widest uppercase mb-2">
-                                        Collection
+                                        {hasSubCategories ? "Browse" : "Collection"}
                                     </p>
                                     <h1 className="text-4xl md:text-5xl font-extrabold text-white capitalize tracking-tight">
                                         {category.name}
                                     </h1>
                                     <p className="text-gray-300 mt-2 text-lg">
-                                        {products.length} {products.length === 1 ? 'product' : 'products'} available
+                                        {hasSubCategories
+                                            ? `${subCategories.length} sub-categor${subCategories.length === 1 ? 'y' : 'ies'} · ${products.length} products`
+                                            : `${products.length} ${products.length === 1 ? 'product' : 'products'} available`
+                                        }
                                     </p>
                                 </div>
 
                                 {/* Back button */}
                                 <button
-                                    onClick={() => navigate("/category")}
+                                    onClick={() => isSubCategory
+                                        ? navigate(`/category/${typeof category.parentId === 'object' ? category.parentId._id : category.parentId}/products`)
+                                        : navigate("/category")
+                                    }
                                     className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-white/20 transition-all"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
-                                    All Categories
+                                    {isSubCategory ? "Back" : "All Categories"}
                                 </button>
                             </div>
                         </div>
@@ -151,36 +176,61 @@ function CategoryProducts() {
             {!category && loading && (
                 <div className="h-72 md:h-96 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
                     <div className="space-y-3 text-center">
-                      <div className="h-8 w-48 bg-gray-700 rounded-lg mx-auto animate-pulse" />
-                      <div className="h-4 w-32 bg-gray-700/60 rounded mx-auto animate-pulse" />
+                        <div className="h-8 w-48 bg-gray-700 rounded-lg mx-auto animate-pulse" />
+                        <div className="h-4 w-32 bg-gray-700/60 rounded mx-auto animate-pulse" />
                     </div>
                 </div>
             )}
 
             {/* Controls + Grid */}
             <div className="max-w-7xl mx-auto px-6 py-8">
-                <div className="flex items-center justify-between mb-8">
-                    <p className="text-gray-400 text-sm font-medium">
-                        Showing {products.length} {products.length === 1 ? 'product' : 'products'}
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <ArrowUpDown className="h-4 w-4 text-gray-400" />
-                        <Select value={sort} onValueChange={handleValueChange}>
-                            <SelectTrigger className="w-[200px] rounded-xl border-gray-200 bg-white">
-                                <SelectValue placeholder="Sort by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Sort by</SelectLabel>
-                                    <SelectItem value="name-asc">Name: A → Z</SelectItem>
-                                    <SelectItem value="name-desc">Name: Z → A</SelectItem>
-                                    <SelectItem value="price-asc">Price: Low → High</SelectItem>
-                                    <SelectItem value="price-desc">Price: High → Low</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+
+                {/* Sub-Categories Grid — show first if the category has sub-categories */}
+                {!loading && hasSubCategories && (
+                    <div className="mb-10">
+                        <div className="flex items-center gap-2 mb-5">
+                            <LayoutGrid className="h-5 w-5 text-store-primary" />
+                            <h2 className="text-lg font-bold text-gray-900">Sub-Categories</h2>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                            {subCategories.map((sub, i) => (
+                                <Link
+                                    to={`/category/${sub._id}/products`}
+                                    key={sub._id}
+                                    className={`animate-fade-in-up animation-delay-${(i % 4) * 100}`}
+                                >
+                                    <CategoryCard category={sub} />
+                                </Link>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {/* Sort controls — only show if there are products */}
+                {!loading && products.length > 0 && (
+                    <div className="flex items-center justify-between mb-8">
+                        <p className="text-gray-400 text-sm font-medium">
+                            {hasSubCategories ? "All products in this category" : `Showing ${products.length} ${products.length === 1 ? 'product' : 'products'}`}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                            <Select value={sort} onValueChange={handleValueChange}>
+                                <SelectTrigger className="w-[200px] rounded-xl border-gray-200 bg-white">
+                                    <SelectValue placeholder="Sort by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Sort by</SelectLabel>
+                                        <SelectItem value="name-asc">Name: A → Z</SelectItem>
+                                        <SelectItem value="name-desc">Name: Z → A</SelectItem>
+                                        <SelectItem value="price-asc">Price: Low → High</SelectItem>
+                                        <SelectItem value="price-desc">Price: High → Low</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                )}
 
                 {/* Loading Skeletons */}
                 {loading && (
@@ -203,7 +253,7 @@ function CategoryProducts() {
                 )}
 
                 {/* Empty State */}
-                {!loading && products.length === 0 && (
+                {!loading && products.length === 0 && !hasSubCategories && (
                     <div className="text-center py-20">
                         <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
                             <Package className="h-8 w-8 text-gray-300" />

@@ -23,7 +23,7 @@ function Category() {
     async function getCategory() {
         try {
             const response = await fetch(
-                `${process.env.REACT_APP_API_URL}/category/get-category?active=true`,
+                `${process.env.REACT_APP_API_URL}/category/get-category?active=true&parent=null`,
                 {
                     method: "GET",
                     headers: {

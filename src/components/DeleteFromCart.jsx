@@ -3,13 +3,16 @@ import { Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 
-function DeleteFromCart({ productId, handleDeleteCartItems }) {
+function DeleteFromCart({ productId, handleDeleteCartItems, variantId }) {
 
   const handleDeleteFromCart = async () => {
     try {
       const toastId = toast.loading("Removing...");
+      const url = variantId
+        ? `${process.env.REACT_APP_API_URL}/cart/${productId?._id}?variantId=${variantId}`
+        : `${process.env.REACT_APP_API_URL}/cart/${productId?._id}`;
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/cart/${productId?._id}`, {
+      const response = await fetch(url, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

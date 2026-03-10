@@ -138,8 +138,23 @@ function AdminActivityLog() {
 
       {/* Activity List */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="max-w-6xl animate-pulse">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-9 h-9 rounded-lg bg-gray-100" />
+            <div className="h-6 w-32 bg-gray-100 rounded" />
+          </div>
+          <div className="space-y-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4">
+                <div className="h-9 w-9 bg-gray-100 rounded-lg flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 bg-gray-100 rounded w-2/3" />
+                  <div className="h-2.5 bg-gray-50 rounded w-1/3" />
+                </div>
+                <div className="h-3 w-16 bg-gray-50 rounded" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : logs.length === 0 ? (
         <div className="text-center py-16 text-gray-400">

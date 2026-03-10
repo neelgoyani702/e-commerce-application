@@ -9,7 +9,8 @@ function ProductCard({ product, wishlist = [], onWishlistToggle }) {
 
     const { settings } = useContext(SettingsContext);
     const { user } = useContext(AuthContext);
-    const { _id, name, description, price, image, category, discount, stock, avgRating, reviewCount } = product;
+    const { _id, name, description, price, image, images, category, discount, stock, avgRating, reviewCount } = product;
+    const displayImage = images?.length > 0 ? images[0] : image;
 
     const hasDiscount = discount > 0;
     const discountedPrice = hasDiscount ? Math.round(price - (price * discount / 100)) : price;
@@ -58,7 +59,7 @@ function ProductCard({ product, wishlist = [], onWishlistToggle }) {
                 <div className="relative overflow-hidden bg-gray-50">
                     <img
                         className={`w-full object-cover object-center h-60 transition-transform duration-700 ${outOfStock ? 'opacity-50 grayscale' : 'group-hover:scale-105'}`}
-                        src={image}
+                        src={displayImage}
                         alt={name}
                     />
                     {/* Category badge */}

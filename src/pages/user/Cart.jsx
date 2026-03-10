@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import AddToCart from '../../components/AddToCart';
 import DeleteFromCart from '../../components/DeleteFromCart';
+import { SkeletonCartItem } from '../../components/SkeletonCard';
 
 const quantityOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -124,8 +125,21 @@ function Cart() {
       <div className='max-w-7xl mx-auto px-6 py-8'>
         {/* Loading */}
         {loading && (
-          <div className="flex justify-center py-20">
-            <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1 flex flex-col gap-4">
+              {[...Array(3)].map((_, i) => <SkeletonCartItem key={i} />)}
+            </div>
+            <div className="lg:w-96">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 animate-pulse">
+                <div className="h-5 w-32 bg-gray-100 rounded" />
+                <div className="space-y-3">
+                  <div className="flex justify-between"><div className="h-3 w-16 bg-gray-50 rounded" /><div className="h-3 w-14 bg-gray-100 rounded" /></div>
+                  <div className="flex justify-between"><div className="h-3 w-20 bg-gray-50 rounded" /><div className="h-3 w-10 bg-gray-100 rounded" /></div>
+                  <div className="border-t border-dashed border-gray-100 pt-3 flex justify-between"><div className="h-4 w-12 bg-gray-100 rounded" /><div className="h-4 w-16 bg-gray-100 rounded" /></div>
+                </div>
+                <div className="h-12 bg-gray-100 rounded-xl w-full" />
+              </div>
+            </div>
           </div>
         )}
 
@@ -155,6 +169,9 @@ function Cart() {
                           >
                             {item.productId?.name}
                           </h3>
+                          {item.variantLabel && (
+                            <p className="text-[11px] text-gray-500 mt-0.5 font-medium">{item.variantLabel}</p>
+                          )}
                           <p className="text-xs text-gray-400 mt-1 capitalize">{item.productId?.category?.name || ""}</p>
                         </div>
                         <div className='flex items-center gap-2'>
@@ -172,6 +189,7 @@ function Cart() {
                       <DeleteFromCart
                         productId={item.productId}
                         handleDeleteCartItems={handleDeleteCartItems}
+                        variantId={item.variantId}
                       />
                       <Dialog>
                         <DialogTrigger>
@@ -211,6 +229,7 @@ function Cart() {
                               quantity={addToCartQuantity}
                               ATC={false}
                               handleChangeCartItems={handleChangeCartItems}
+                              variantId={item.variantId}
                             >
                               <button className="w-full py-3 bg-store-gradient hover:bg-store-gradient-light text-white font-semibold rounded-xl transition-all duration-300 shadow-md shadow-store-primary">
                                 Confirm: {addToCartQuantity}

@@ -80,8 +80,19 @@ function AdminUsers() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="max-w-6xl animate-pulse">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-lg bg-gray-100" />
+          <div className="h-6 w-24 bg-gray-100 rounded" />
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          {[...Array(6)].map((_, r) => (
+            <div key={r} className="flex gap-4 px-5 py-4 border-b border-gray-50 items-center">
+              <div className="h-9 w-9 bg-gray-100 rounded-full flex-shrink-0" />
+              {[...Array(4)].map((_, c) => <div key={c} className={`h-3 rounded flex-1 ${c === 0 ? 'bg-gray-100' : 'bg-gray-50'}`} />)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -154,8 +165,8 @@ function AdminUsers() {
                     <td className="px-5 py-3">
                       <span
                         className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize ${u.role === "admin"
-                            ? "bg-indigo-50 text-indigo-700"
-                            : "bg-gray-100 text-gray-600"
+                          ? "bg-indigo-50 text-indigo-700"
+                          : "bg-gray-100 text-gray-600"
                           }`}
                       >
                         {u.role === "admin" ? (
@@ -177,8 +188,8 @@ function AdminUsers() {
                       <button
                         onClick={() => toggleRole(u._id, u.role)}
                         className={`text-[11px] font-semibold px-3 py-1 rounded-lg transition-colors ${u.role === "admin"
-                            ? "text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
-                            : "text-indigo-600 hover:text-indigo-500 bg-indigo-50 hover:bg-indigo-100"
+                          ? "text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
+                          : "text-indigo-600 hover:text-indigo-500 bg-indigo-50 hover:bg-indigo-100"
                           }`}
                       >
                         {u.role === "admin" ? "Make User" : "Make Admin"}

@@ -51,10 +51,13 @@ function AdminProducts() {
     name: "",
     description: "",
     price: "",
-    size: "",
     category: "",
     bulletPoints: [""],
-    image: null,
+    newImages: [],
+    existingImages: [],
+    removeImages: [],
+    hasVariants: false,
+    variants: [],
     stock: "",
     discount: "",
     featured: false,
@@ -93,16 +96,38 @@ function AdminProducts() {
     }
   }
 
+  // Computed: top-level categories and sub-categories
+  const topLevelCategories = categories.filter((c) => !c.parentId);
+  function getSubCategoriesFor(parentId) {
+    return categories.filter(
+      (c) => c.parentId === parentId || c.parentId?._id === parentId
+    );
+  }
+
+  // Determine parent category for a given category ID
+  function getParentCategoryId(categoryId) {
+    const cat = categories.find((c) => c._id === categoryId);
+    if (!cat) return "";
+    if (cat.parentId) return cat.parentId._id || cat.parentId;
+    return categoryId;
+  }
+
   function openCreate() {
     setEditing(null);
+    const firstParent = topLevelCategories[0];
+    const firstParentSubs = firstParent ? getSubCategoriesFor(firstParent._id) : [];
     setForm({
       name: "",
       description: "",
       price: "",
-      size: "",
-      category: categories[0]?.name || "",
+      parentCategory: firstParent?._id || "",
+      category: firstParentSubs.length > 0 ? firstParentSubs[0]._id : (firstParent?._id || ""),
       bulletPoints: [""],
-      image: null,
+      newImages: [],
+      existingImages: [],
+      removeImages: [],
+      hasVariants: false,
+      variants: [],
       stock: "",
       discount: "",
       featured: false,
@@ -137,14 +162,25 @@ function AdminProducts() {
       if (normalizedBP.length === 0) normalizedBP = [""];
     }
 
+    // Determine the category ID and parent
+    const catId = product.category?._id || product.category || "";
+    const parentId = getParentCategoryId(catId);
+    const isSubCategory = parentId !== catId;
+
+    const productVariants = product.variants?.length > 0 ? product.variants : [];
+
     setForm({
       name: product.name || "",
       description: product.description || "",
       price: product.price || "",
-      size: product.size || "",
-      category: product.category?.name || product.category || "",
+      parentCategory: isSubCategory ? parentId : catId,
+      category: catId,
       bulletPoints: normalizedBP,
-      image: null,
+      newImages: [],
+      existingImages: product.images?.length > 0 ? [...product.images] : (product.image ? [product.image] : []),
+      removeImages: [],
+      hasVariants: productVariants.length > 0,
+      variants: productVariants.map(v => ({ size: v.size || "", color: v.color || "", colorCode: v.colorCode || "#000000", stock: v.stock ?? 0, priceOverride: v.priceOverride ?? "", sku: v.sku || "" })),
       stock: product.stock ?? "",
       discount: product.discount ?? "",
       featured: product.featured || false,
@@ -157,7 +193,9 @@ function AdminProducts() {
     if (!form.price || Number(form.price) <= 0)
       return toast.error("Valid price is required");
     if (!form.category) return toast.error("Category is required");
-    if (!editing && !form.image) return toast.error("Image is required");
+    const totalImages = (form.existingImages?.length || 0) - (form.removeImages?.length || 0) + (form.newImages?.length || 0);
+    if (!editing && form.newImages.length === 0) return toast.error("At least one image is required");
+    if (editing && totalImages <= 0) return toast.error("Product must have at least one image");
 
     setSaving(true);
     try {
@@ -165,14 +203,29 @@ function AdminProducts() {
       formData.append("name", form.name.trim());
       formData.append("description", form.description?.trim() || "");
       formData.append("price", form.price);
-      formData.append("size", form.size);
-      formData.append("category", form.category.toLowerCase());
-      formData.append("stock", form.stock || 0);
+      formData.append("category", form.category);
+      formData.append("stock", form.hasVariants ? 0 : (form.stock || 0));
       formData.append("discount", form.discount || 0);
       formData.append("featured", form.featured);
       const bp = form.bulletPoints.filter((b) => b.trim());
       if (bp.length) formData.append("bulletPoints", JSON.stringify(bp));
-      if (form.image) formData.append("Image", form.image);
+
+      // Send variants
+      if (form.hasVariants && form.variants.length > 0) {
+        formData.append("variants", JSON.stringify(form.variants));
+      } else {
+        formData.append("variants", JSON.stringify([]));
+      }
+
+      // Append all new images
+      for (const file of form.newImages) {
+        formData.append("Images", file);
+      }
+
+      // Append images to remove
+      if (form.removeImages?.length > 0) {
+        formData.append("removeImages", JSON.stringify(form.removeImages));
+      }
 
       const url = editing
         ? `${process.env.REACT_APP_API_URL}/product/update-product/${editing._id}`
@@ -386,8 +439,26 @@ function AdminProducts() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="max-w-6xl animate-pulse">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-lg bg-gray-100" />
+          <div className="h-6 w-28 bg-gray-100 rounded" />
+        </div>
+        <div className="flex gap-3 mb-4">
+          <div className="h-9 flex-1 bg-gray-100 rounded-lg" />
+          <div className="h-9 w-32 bg-gray-100 rounded-lg" />
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="flex gap-4 px-5 py-3 border-b border-gray-100">
+            {[...Array(6)].map((_, i) => <div key={i} className="h-3 bg-gray-100 rounded flex-1" />)}
+          </div>
+          {[...Array(6)].map((_, r) => (
+            <div key={r} className="flex gap-4 px-5 py-4 border-b border-gray-50 items-center">
+              <div className="h-10 w-10 bg-gray-100 rounded-lg flex-shrink-0" />
+              {[...Array(5)].map((_, c) => <div key={c} className={`h-3 rounded flex-1 ${c === 0 ? 'bg-gray-100' : 'bg-gray-50'}`} />)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -953,31 +1024,114 @@ function AdminProducts() {
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-                      size
-                    </label>
-                    <input
-                      type="string"
-                      value={form.size}
-                      onChange={(e) =>  
-                        setForm({ ...form, size: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-                      Stock
-                    </label>
-                    <input
-                      type="number"
-                      value={form.stock}
-                      onChange={(e) =>
-                        setForm({ ...form, stock: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                    />
+
+                  {/* Variant Manager OR simple Stock */}
+                  <div className="col-span-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        id="hasVariants"
+                        checked={form.hasVariants}
+                        onChange={(e) => setForm({ ...form, hasVariants: e.target.checked, variants: e.target.checked ? (form.variants.length > 0 ? form.variants : [{ size: "", color: "", colorCode: "#000000", stock: 0, priceOverride: "", sku: "" }]) : [] })}
+                        className="rounded border-gray-300"
+                      />
+                      <label htmlFor="hasVariants" className="text-xs font-semibold text-gray-700">
+                        This product has size/color variants
+                      </label>
+                    </div>
+
+                    {form.hasVariants ? (
+                      <div className="border border-gray-200 rounded-xl p-3 space-y-2">
+                        <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-gray-400 uppercase px-1">
+                          <span className="col-span-2">Size</span>
+                          <span className="col-span-2">Color</span>
+                          <span className="col-span-1">Swatch</span>
+                          <span className="col-span-2">Stock</span>
+                          <span className="col-span-2">Price ₹</span>
+                          <span className="col-span-2">SKU</span>
+                          <span className="col-span-1"></span>
+                        </div>
+                        {form.variants.map((v, i) => (
+                          <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                            <input
+                              type="text"
+                              placeholder="M, L, XL..."
+                              value={v.size}
+                              onChange={(e) => { const u = [...form.variants]; u[i] = { ...u[i], size: e.target.value }; setForm({ ...form, variants: u }); }}
+                              className="col-span-2 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Red, Blue..."
+                              value={v.color}
+                              onChange={(e) => { const u = [...form.variants]; u[i] = { ...u[i], color: e.target.value }; setForm({ ...form, variants: u }); }}
+                              className="col-span-2 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                            />
+                            <input
+                              type="color"
+                              value={v.colorCode || "#000000"}
+                              onChange={(e) => { const u = [...form.variants]; u[i] = { ...u[i], colorCode: e.target.value }; setForm({ ...form, variants: u }); }}
+                              className="col-span-1 h-8 w-full rounded-lg border border-gray-200 cursor-pointer"
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              value={v.stock}
+                              onChange={(e) => { const u = [...form.variants]; u[i] = { ...u[i], stock: Number(e.target.value) }; setForm({ ...form, variants: u }); }}
+                              className="col-span-2 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="Base"
+                              value={v.priceOverride}
+                              onChange={(e) => { const u = [...form.variants]; u[i] = { ...u[i], priceOverride: e.target.value }; setForm({ ...form, variants: u }); }}
+                              className="col-span-2 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                            />
+                            <input
+                              type="text"
+                              placeholder="SKU"
+                              value={v.sku}
+                              onChange={(e) => { const u = [...form.variants]; u[i] = { ...u[i], sku: e.target.value }; setForm({ ...form, variants: u }); }}
+                              className="col-span-2 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => { const u = form.variants.filter((_, idx) => idx !== i); setForm({ ...form, variants: u.length > 0 ? u : [{ size: "", color: "", colorCode: "#000000", stock: 0, priceOverride: "", sku: "" }] }); }}
+                              className="col-span-1 p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, variants: [...form.variants, { size: "", color: "", colorCode: "#000000", stock: 0, priceOverride: "", sku: "" }] })}
+                          className="text-xs font-semibold text-indigo-500 hover:text-indigo-700 transition-colors mt-1"
+                        >
+                          + Add Variant
+                        </button>
+                        <div className="text-[10px] text-gray-400 mt-1">
+                          Total stock: <span className="font-bold text-gray-600">{form.variants.reduce((s, v) => s + (Number(v.stock) || 0), 0)}</span>
+                          {" · "} Leave "Price ₹" empty to use base price
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                          Stock
+                        </label>
+                        <input
+                          type="number"
+                          value={form.stock}
+                          onChange={(e) =>
+                            setForm({ ...form, stock: e.target.value })
+                          }
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
@@ -998,20 +1152,47 @@ function AdminProducts() {
                     Category *
                   </label>
                   <select
-                    value={form.category}
-                    onChange={(e) =>
-                      setForm({ ...form, category: e.target.value })
-                    }
+                    value={form.parentCategory || ""}
+                    onChange={(e) => {
+                      const parentId = e.target.value;
+                      const subs = getSubCategoriesFor(parentId);
+                      setForm({
+                        ...form,
+                        parentCategory: parentId,
+                        category: subs.length > 0 ? subs[0]._id : parentId,
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                   >
                     <option value="">Select category</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat.name}>
+                    {topLevelCategories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
                         {cat.name}
                       </option>
                     ))}
                   </select>
                 </div>
+                {/* Sub-category dropdown — only if parent has sub-categories */}
+                {form.parentCategory && getSubCategoriesFor(form.parentCategory).length > 0 && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                      Sub-Category
+                    </label>
+                    <select
+                      value={form.category}
+                      onChange={(e) =>
+                        setForm({ ...form, category: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                    >
+                      {getSubCategoriesFor(form.parentCategory).map((sub) => (
+                        <option key={sub._id} value={sub._id}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -1031,26 +1212,74 @@ function AdminProducts() {
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
-                    Image {!editing && "*"}
+                    Images {!editing && "*"} <span className="text-gray-400 font-normal">(max 5)</span>
                   </label>
-                  <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors">
-                    <Upload className="h-5 w-5 text-gray-300 mb-1" />
-                    <span className="text-xs text-gray-400">
-                      {form.image
-                        ? form.image.name
-                        : editing
-                          ? "Replace image (optional)"
-                          : "Click to upload"}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) =>
-                        setForm({ ...form, image: e.target.files[0] })
-                      }
-                    />
-                  </label>
+
+                  {/* Existing + new image previews */}
+                  {((form.existingImages?.length > 0) || (form.newImages?.length > 0)) && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {form.existingImages?.filter(img => !form.removeImages?.includes(img)).map((img, i) => (
+                        <div key={`existing-${i}`} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setForm({
+                              ...form,
+                              removeImages: [...(form.removeImages || []), img],
+                            })}
+                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      {form.newImages?.map((file, i) => (
+                        <div key={`new-${i}`} className="relative group w-16 h-16 rounded-lg overflow-hidden border-2 border-indigo-200">
+                          <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setForm({
+                              ...form,
+                              newImages: form.newImages.filter((_, idx) => idx !== i),
+                            })}
+                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4 text-white" />
+                          </button>
+                          <div className="absolute bottom-0 left-0 right-0 bg-indigo-500 text-white text-[8px] text-center py-0.5">NEW</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upload button */}
+                  {((form.existingImages?.filter(img => !form.removeImages?.includes(img)).length || 0) + (form.newImages?.length || 0)) < 5 && (
+                    <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-colors">
+                      <Upload className="h-5 w-5 text-gray-300 mb-1" />
+                      <span className="text-xs text-gray-400">
+                        {editing ? "Add more images" : "Click to upload images"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          const currentCount = (form.existingImages?.filter(img => !form.removeImages?.includes(img)).length || 0) + (form.newImages?.length || 0);
+                          const remaining = 5 - currentCount;
+                          if (files.length > remaining) {
+                            toast.error(`You can only add ${remaining} more image(s)`);
+                          }
+                          setForm({
+                            ...form,
+                            newImages: [...(form.newImages || []), ...files.slice(0, remaining)],
+                          });
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-700 mb-1.5 block">

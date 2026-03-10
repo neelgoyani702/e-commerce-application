@@ -74,8 +74,8 @@ function OrderConfirmation() {
             <React.Fragment key={i}>
               <div className="flex items-center gap-2">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shadow-md ${i < 2
-                    ? "bg-store-gradient text-white shadow-store-primary"
-                    : "bg-gradient-to-br from-emerald-400 to-green-500 text-white shadow-emerald-500/20"
+                  ? "bg-store-gradient text-white shadow-store-primary"
+                  : "bg-gradient-to-br from-emerald-400 to-green-500 text-white shadow-emerald-500/20"
                   }`}>
                   <Check className="h-4 w-4" />
                 </div>
@@ -167,6 +167,9 @@ function OrderConfirmation() {
                     >
                       {item.productId?.name || "Product"}
                     </span>
+                    {item.variantLabel && (
+                      <p className="text-[11px] text-gray-500 font-medium">{item.variantLabel}</p>
+                    )}
                     <p className="text-xs text-gray-400">Qty: {item.quantity}</p>
                   </div>
                   <div className="flex items-center text-sm font-bold">

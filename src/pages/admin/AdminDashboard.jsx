@@ -90,8 +90,40 @@ function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="max-w-6xl animate-pulse">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-lg bg-gray-100" />
+          <div className="h-6 w-36 bg-gray-100 rounded" />
+        </div>
+        {/* Stat cards skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-100 p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-16 bg-gray-100 rounded" />
+                <div className="h-8 w-8 bg-gray-50 rounded-lg" />
+              </div>
+              <div className="h-7 w-20 bg-gray-100 rounded" />
+              <div className="h-2.5 w-24 bg-gray-50 rounded" />
+            </div>
+          ))}
+        </div>
+        {/* Chart skeleton */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
+          <div className="h-5 w-32 bg-gray-100 rounded mb-4" />
+          <div className="h-48 bg-gray-50 rounded-lg" />
+        </div>
+        {/* Table skeleton */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <div className="h-5 w-28 bg-gray-100 rounded mb-4" />
+          {[...Array(4)].map((_, r) => (
+            <div key={r} className="flex gap-4 py-3 border-b border-gray-50">
+              {[...Array(5)].map((_, c) => (
+                <div key={c} className={`h-3 rounded flex-1 ${c === 0 ? 'bg-gray-100' : 'bg-gray-50'}`} />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -509,8 +541,8 @@ function AdminDashboard() {
                 </div>
                 <span
                   className={`text-xs font-black px-2 py-1 rounded-lg ${product.stock === 0
-                      ? "bg-red-50 text-red-500"
-                      : "bg-amber-50 text-amber-600"
+                    ? "bg-red-50 text-red-500"
+                    : "bg-amber-50 text-amber-600"
                     }`}
                 >
                   {product.stock === 0 ? "Out" : product.stock}

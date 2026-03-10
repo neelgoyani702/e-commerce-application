@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 function AddToCart(props) {
 
-    const { product, quantity, ATC, handleChangeCartItems } = props;
+    const { product, quantity, ATC, handleChangeCartItems, variantId } = props;
 
     const addToCart = async () => {
         try {
@@ -18,7 +18,8 @@ function AddToCart(props) {
                 body: JSON.stringify({
                     productId: product._id,
                     quantity: quantity || 1,
-                    ATC: ATC || false
+                    ATC: ATC || false,
+                    variantId: variantId || undefined,
                 })
             });
             toast.dismiss(toastId);

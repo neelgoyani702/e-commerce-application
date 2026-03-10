@@ -103,8 +103,20 @@ function AdminSettings() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="max-w-6xl animate-pulse">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-lg bg-gray-100" />
+          <div className="h-6 w-28 bg-gray-100 rounded" />
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 p-6 space-y-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-3 w-24 bg-gray-100 rounded" />
+              <div className="h-10 bg-gray-50 rounded-lg" />
+            </div>
+          ))}
+          <div className="h-10 w-28 bg-gray-100 rounded-lg" />
+        </div>
       </div>
     );
   }
@@ -128,8 +140,8 @@ function AdminSettings() {
           onClick={handleSave}
           disabled={!dirty || saving}
           className={`inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg transition-all ${dirty
-              ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+            : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
         >
           <Save className="h-3.5 w-3.5" />

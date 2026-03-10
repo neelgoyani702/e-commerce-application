@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "../../components/ui/dialog";
 import AddAddress from "../../components/AddAddress";
+import { SkeletonCheckout } from "../../components/SkeletonCard";
 
 function Checkout() {
   const { user } = useContext(AuthContext);
@@ -195,11 +196,7 @@ function Checkout() {
       </div>
 
       {/* Loading */}
-      {(loading || !cart) && (
-        <div className="flex justify-center py-20">
-          <div className="h-10 w-10 border-4 border-store-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      )}
+      {(loading || !cart) && <SkeletonCheckout />}
 
       {/* Content */}
       {!loading && cart && (
@@ -320,6 +317,9 @@ function Checkout() {
                         <h3 className="font-semibold text-sm capitalize">
                           {item.productId?.name}
                         </h3>
+                        {item.variantLabel && (
+                          <p className="text-[11px] text-gray-500 mt-0.5 font-medium">{item.variantLabel}</p>
+                        )}
                         <p className="text-xs text-gray-400 mt-0.5">
                           Qty: {item.quantity}
                         </p>
