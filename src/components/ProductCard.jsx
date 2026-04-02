@@ -1,22 +1,44 @@
 import React, { useContext } from 'react'
-import { Heart, ShoppingBag, Star } from 'lucide-react';
+import { Heart, ShoppingBag, Star, GitCompareArrows, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SettingsContext } from '../context/SettingsProvider';
 import { AuthContext } from '../context/AuthProvider';
+import { CompareContext } from '../context/CompareProvider';
+import { FlashSaleContext } from '../context/FlashSaleProvider';
 import { toast } from 'sonner';
 
 function ProductCard({ product, wishlist = [], onWishlistToggle }) {
 
     const { settings } = useContext(SettingsContext);
     const { user } = useContext(AuthContext);
+    const { toggleCompare, isInCompare, compareCount, maxCompare } = useContext(CompareContext);
+    const flashContext = useContext(FlashSaleContext);
+    const getFlashSaleData = flashContext?.getFlashSaleData;
     const { _id, name, description, price, image, images, category, discount, stock, avgRating, reviewCount } = product;
     const displayImage = images?.length > 0 ? images[0] : image;
 
+    const flashSaleData = getFlashSaleData ? getFlashSaleData(_id) : null;
+    const isFlashSale = !!flashSaleData;
+    const flashSalePrice = flashSaleData?.salePrice;
+
     const hasDiscount = discount > 0;
     const discountedPrice = hasDiscount ? Math.round(price - (price * discount / 100)) : price;
+    
     const outOfStock = stock === 0;
     const lowStock = stock > 0 && stock <= 5;
     const isWishlisted = wishlist.includes(_id);
+    const inCompare = isInCompare(_id);
+
+    const handleCompareToggle = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!inCompare && compareCount >= maxCompare) {
+            toast.error(`You can compare up to ${maxCompare} products`);
+            return;
+        }
+        toggleCompare(_id);
+        toast.success(inCompare ? "Removed from compare" : "Added to compare");
+    };
 
     const handleWishlistToggle = async (e) => {
         e.preventDefault();
@@ -68,8 +90,13 @@ function ProductCard({ product, wishlist = [], onWishlistToggle }) {
                             {category.name || category}
                         </span>
                     )}
-                    {/* Discount badge */}
-                    {hasDiscount && !outOfStock && (
+                    {/* Discount/Flash badge */}
+                    {isFlashSale && !outOfStock ? (
+                        <span className="absolute top-12 right-3 flex items-center gap-1 bg-red-600 text-white text-[10px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-full shadow-sm">
+                            <Zap className="h-3 w-3 fill-white" />
+                            DEAL
+                        </span>
+                    ) : hasDiscount && !outOfStock && (
                         <span className="absolute top-12 right-3 bg-red-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
                             {discount}% OFF
                         </span>
@@ -84,6 +111,17 @@ function ProductCard({ product, wishlist = [], onWishlistToggle }) {
                     >
                         <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 stroke-red-500' : ''}`} />
                     </button>
+                    {/* Compare toggle */}
+                    <button
+                        onClick={handleCompareToggle}
+                        className={`absolute bottom-3 left-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 z-10 ${inCompare
+                            ? 'bg-store-primary text-white shadow-md'
+                            : 'bg-white/90 backdrop-blur-sm text-gray-400 hover:text-store-primary hover:bg-white shadow-sm opacity-0 group-hover:opacity-100'
+                            }`}
+                        title={inCompare ? "Remove from compare" : "Add to compare"}
+                    >
+                        <GitCompareArrows className="h-3.5 w-3.5" />
+                    </button>
                     {/* Out of stock overlay */}
                     {outOfStock && (
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -94,7 +132,7 @@ function ProductCard({ product, wishlist = [], onWishlistToggle }) {
                     )}
                     {/* Low stock badge */}
                     {lowStock && (
-                        <span className="absolute bottom-3 left-3 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                        <span className="absolute bottom-3 left-12 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
                             Only {stock} left
                         </span>
                     )}
@@ -141,7 +179,16 @@ function ProductCard({ product, wishlist = [], onWishlistToggle }) {
                     </p>
                     <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
                         <div className="flex items-center gap-2">
-                            {hasDiscount ? (
+                            {isFlashSale ? (
+                                <>
+                                    <span className="font-bold text-lg text-red-600">
+                                        {settings?.currencySymbol || '₹'}{flashSalePrice.toLocaleString()}
+                                    </span>
+                                    <span className="text-sm text-gray-400 line-through">
+                                        {settings?.currencySymbol || '₹'}{price?.toLocaleString()}
+                                    </span>
+                                </>
+                            ) : hasDiscount ? (
                                 <>
                                     <span className="font-bold text-lg text-gray-900">
                                         {settings?.currencySymbol || '₹'}{discountedPrice.toLocaleString()}

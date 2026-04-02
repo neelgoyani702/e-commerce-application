@@ -2,14 +2,17 @@ import React, { useState, useEffect, useContext } from "react";
 import Slider from "../../components/Slider.jsx";
 import HomeCategories from "../../components/HomeCategories.jsx";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Truck, ShieldCheck, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowRight, Truck, ShieldCheck, RotateCcw, Sparkles, Zap } from "lucide-react";
 import ProductCard from "../../components/ProductCard.jsx";
+import CountdownTimer from "../../components/CountdownTimer.jsx";
 import { AuthContext } from "../../context/AuthProvider";
+import { FlashSaleContext } from "../../context/FlashSaleProvider";
 import { getRecentlyViewedIds } from "../../hooks/useRecentlyViewed";
 
 function Home() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const { activeFlashSales } = useContext(FlashSaleContext) || { activeFlashSales: [] };
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [userWishlist, setUserWishlist] = useState([]);
@@ -85,6 +88,42 @@ function Home() {
     <div className="md:mt-16 mt-32">
       {/* Hero Slider */}
       <Slider />
+
+      {/* Active Flash Sale Banner */}
+      {activeFlashSales && activeFlashSales.length > 0 && (
+        <section className="bg-gradient-to-r from-red-600 via-rose-500 to-orange-500 py-6 md:py-8 shadow-inner overflow-hidden relative">
+          {/* Decorative shapes */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+          
+          <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-sm border border-white/30 hidden sm:block">
+                <Zap className="h-8 w-8 text-white fill-white animate-pulse" />
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight drop-shadow-sm flex items-center gap-2">
+                  <span className="sm:hidden"><Zap className="h-5 w-5 fill-white" /></span>
+                  {activeFlashSales[0].name}
+                </h2>
+                <p className="text-white/90 text-sm md:text-base font-medium mt-1">
+                  Limited time offer! Grab these deals before they're gone.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-center md:items-end gap-3 z-10">
+              <CountdownTimer targetDate={activeFlashSales[0].endDate} />
+              <button
+                onClick={() => navigate("/products")}
+                className="text-xs md:text-sm font-bold bg-white text-rose-600 px-5 py-2 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 w-full md:w-auto mt-2"
+              >
+                SHOP DEALS NOW →
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Trust Bar */}
       <section className="border-b bg-white">

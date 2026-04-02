@@ -16,6 +16,12 @@ import {
   TrendingUp,
   Ticket,
   Settings,
+  RotateCcw,
+  Zap,
+  Gift,
+  BarChart3,
+  AlertTriangle,
+  FileSpreadsheet,
 } from "lucide-react";
 
 const navItems = [
@@ -26,6 +32,13 @@ const navItems = [
   { label: "Users", to: "/admin/users", icon: Users },
   { label: "Customers", to: "/admin/customers", icon: TrendingUp },
   { label: "Coupons", to: "/admin/coupons", icon: Ticket },
+  { label: "Flash Sales", to: "/admin/flash-sales", icon: Zap },
+  { label: "Bundle Offers", to: "/admin/bundles", icon: Gift },
+  { label: "Sales Reports", to: "/admin/analytics", icon: BarChart3 },
+  { label: "Inventory", to: "/admin/inventory", icon: AlertTriangle },
+  { label: "Bulk Import/Export", to: "/admin/bulk", icon: FileSpreadsheet },
+  { label: "Segments", to: "/admin/segments", icon: TrendingUp },
+  { label: "Returns", to: "/admin/returns", icon: RotateCcw },
   { label: "Activity Log", to: "/admin/activity-log", icon: Activity },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ];

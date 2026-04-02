@@ -20,6 +20,9 @@ import {
   ArrowDown,
   Download,
   Calendar,
+  Clipboard,
+  PackageCheck,
+  CircleDot,
 } from "lucide-react";
 
 const PAGE_SIZES = [12, 25, 50];
@@ -30,6 +33,7 @@ function AdminOrders() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [statusNote, setStatusNote] = useState("");
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -75,7 +79,7 @@ function AdminOrders() {
     }
   }
 
-  async function updateStatus(orderId, status) {
+  async function updateStatus(orderId, status, note = "") {
     try {
       const toastId = toast.loading(`Updating to ${status}...`);
       const response = await fetch(
@@ -84,19 +88,21 @@ function AdminOrders() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({ status, note }),
         }
       );
       toast.dismiss(toastId);
       const data = await response.json();
       if (response.ok) {
         toast.success(data.message || "Status updated");
+        const updated = data.order || { ...selectedOrder, status };
         setOrders(
-          orders.map((o) => (o._id === orderId ? { ...o, status } : o))
+          orders.map((o) => (o._id === orderId ? { ...o, ...updated } : o))
         );
         if (selectedOrder?._id === orderId) {
-          setSelectedOrder({ ...selectedOrder, status });
+          setSelectedOrder(updated);
         }
+        setStatusNote("");
       } else {
         toast.error(data.message || "Failed to update");
       }
@@ -105,11 +111,41 @@ function AdminOrders() {
     }
   }
 
+  const VALID_TRANSITIONS = {
+    "order placed": ["confirmed", "cancelled"],
+    "confirmed": ["packed", "cancelled"],
+    "packed": ["shipped", "cancelled"],
+    "shipped": ["out for delivery", "cancelled"],
+    "out for delivery": ["delivered"],
+    "delivered": [],
+    "cancelled": [],
+  };
+
   const statusConfig = {
     "order placed": {
       color: "bg-yellow-50 text-yellow-700 border-yellow-200",
       icon: Package,
       dotColor: "bg-yellow-500",
+    },
+    confirmed: {
+      color: "bg-blue-50 text-blue-700 border-blue-200",
+      icon: Clipboard,
+      dotColor: "bg-blue-500",
+    },
+    packed: {
+      color: "bg-violet-50 text-violet-700 border-violet-200",
+      icon: PackageCheck,
+      dotColor: "bg-violet-500",
+    },
+    shipped: {
+      color: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      icon: Truck,
+      dotColor: "bg-indigo-500",
+    },
+    "out for delivery": {
+      color: "bg-orange-50 text-orange-700 border-orange-200",
+      icon: CircleDot,
+      dotColor: "bg-orange-500",
     },
     delivered: {
       color: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -196,6 +232,10 @@ function AdminOrders() {
   const statusCounts = {
     all: orders.length,
     "order placed": orders.filter((o) => o.status === "order placed").length,
+    confirmed: orders.filter((o) => o.status === "confirmed").length,
+    packed: orders.filter((o) => o.status === "packed").length,
+    shipped: orders.filter((o) => o.status === "shipped").length,
+    "out for delivery": orders.filter((o) => o.status === "out for delivery").length,
     delivered: orders.filter((o) => o.status === "delivered").length,
     cancelled: orders.filter((o) => o.status === "cancelled").length,
   };
@@ -339,7 +379,11 @@ function AdminOrders() {
         <div className="flex flex-wrap gap-2">
           {[
             { key: "all", label: "All" },
-            { key: "order placed", label: "Active" },
+            { key: "order placed", label: "Placed" },
+            { key: "confirmed", label: "Confirmed" },
+            { key: "packed", label: "Packed" },
+            { key: "shipped", label: "Shipped" },
+            { key: "out for delivery", label: "Out for Delivery" },
             { key: "delivered", label: "Delivered" },
             { key: "cancelled", label: "Cancelled" },
           ].map((tab) => (
@@ -516,18 +560,25 @@ function AdminOrders() {
                         })}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        {order.status === "order placed" && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateStatus(order._id, "delivered");
-                            }}
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-colors"
-                          >
-                            <Truck className="h-3 w-3" />
-                            Deliver
-                          </button>
-                        )}
+                        {(() => {
+                          const nextStatuses = VALID_TRANSITIONS[order.status] || [];
+                          const nextForward = nextStatuses.find((s) => s !== "cancelled");
+                          if (!nextForward) return null;
+                          const cfg = statusConfig[nextForward] || statusConfig["order placed"];
+                          const Icon = cfg.icon;
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateStatus(order._id, nextForward);
+                              }}
+                              className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-colors ${cfg.color} hover:opacity-80`}
+                            >
+                              <Icon className="h-3 w-3" />
+                              {nextForward.charAt(0).toUpperCase() + nextForward.slice(1)}
+                            </button>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );
@@ -633,7 +684,7 @@ function AdminOrders() {
                 <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">
                   Status
                 </p>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span
                     className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold capitalize border ${(statusConfig[selectedOrder.status] ||
                       statusConfig["order placed"]
@@ -649,35 +700,42 @@ function AdminOrders() {
                     {selectedOrder.status}
                   </span>
 
-                  {selectedOrder.status === "order placed" && (
+                  {(VALID_TRANSITIONS[selectedOrder.status] || []).length > 0 && (
                     <div className="relative group">
                       <button className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 px-2.5 py-1.5 rounded-lg transition-colors">
-                        Change
+                        Update Status
                         <ChevronDown className="h-3 w-3" />
                       </button>
-                      <div className="absolute top-full left-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-100 py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-10">
-                        <button
-                          onClick={() =>
-                            updateStatus(selectedOrder._id, "delivered")
-                          }
-                          className="w-full text-left px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center gap-2"
-                        >
-                          <CheckCircle2 className="h-3 w-3" />
-                          Mark Delivered
-                        </button>
-                        <button
-                          onClick={() =>
-                            updateStatus(selectedOrder._id, "cancelled")
-                          }
-                          className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2"
-                        >
-                          <XCircle className="h-3 w-3" />
-                          Cancel Order
-                        </button>
+                      <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-10">
+                        {(VALID_TRANSITIONS[selectedOrder.status] || []).map((nextStatus) => {
+                          const cfg = statusConfig[nextStatus] || statusConfig["order placed"];
+                          const Icon = cfg.icon;
+                          return (
+                            <button
+                              key={nextStatus}
+                              onClick={() =>
+                                updateStatus(selectedOrder._id, nextStatus, statusNote)
+                              }
+                              className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors flex items-center gap-2 capitalize ${nextStatus === "cancelled" ? "text-red-500" : "text-gray-700"}`}
+                            >
+                              <Icon className="h-3 w-3" />
+                              {nextStatus}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
                 </div>
+                {(VALID_TRANSITIONS[selectedOrder.status] || []).length > 0 && (
+                  <input
+                    type="text"
+                    value={statusNote}
+                    onChange={(e) => setStatusNote(e.target.value)}
+                    placeholder="Add note (e.g. tracking ID)..."
+                    className="w-full mt-2 px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400"
+                  />
+                )}
               </div>
 
               {/* Customer Info */}
@@ -777,48 +835,46 @@ function AdminOrders() {
                 <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-3">
                   Timeline
                 </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-700">
-                        Order Placed
-                      </p>
-                      <p className="text-[10px] text-gray-400">
-                        {new Date(selectedOrder.createdAt).toLocaleDateString(
-                          "en-IN",
-                          {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  {selectedOrder.status !== "order placed" && (
+                <div className="space-y-0">
+                  {(selectedOrder.statusHistory || []).map((entry, idx, arr) => {
+                    const cfg = statusConfig[entry.status] || statusConfig["order placed"];
+                    const isLast = idx === arr.length - 1;
+                    return (
+                      <div key={idx} className="flex gap-3">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-2.5 h-2.5 rounded-full mt-1 ${cfg.dotColor}`} />
+                          {!isLast && <div className="w-px flex-1 bg-gray-200 my-1" />}
+                        </div>
+                        <div className="pb-4 flex-1">
+                          <p className="text-xs font-semibold text-gray-700 capitalize">
+                            {entry.status}
+                          </p>
+                          <p className="text-[10px] text-gray-400">
+                            {new Date(entry.timestamp).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                          {entry.note && (
+                            <p className="text-[10px] text-gray-500 mt-0.5 italic">
+                              "{entry.note}"
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {(!selectedOrder.statusHistory || selectedOrder.statusHistory.length === 0) && (
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`w-2 h-2 rounded-full ${selectedOrder.status === "delivered"
-                          ? "bg-emerald-500"
-                          : "bg-red-500"
-                          }`}
-                      />
-                      <div className="flex-1">
-                        <p className="text-xs font-medium text-gray-700 capitalize">
-                          {selectedOrder.status}
-                        </p>
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                      <div>
+                        <p className="text-xs font-medium text-gray-700">Order Placed</p>
                         <p className="text-[10px] text-gray-400">
-                          {new Date(
-                            selectedOrder.updatedAt
-                          ).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
+                          {new Date(selectedOrder.createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
                           })}
                         </p>
                       </div>
@@ -833,7 +889,7 @@ function AdminOrders() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-gray-400">Subtotal</span>
                 <span className="text-xs text-gray-500">
-                  ₹{((selectedOrder.totalAmount || 0) + (selectedOrder.couponDiscount || 0)).toLocaleString()}
+                  ₹{(selectedOrder.subTotal || (selectedOrder.totalAmount + (selectedOrder.couponDiscount || 0) + (selectedOrder.regularDiscount || 0) + (selectedOrder.flashSaleDiscount || 0) + (selectedOrder.bundleDiscount || 0))).toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between mb-2">
@@ -842,6 +898,30 @@ function AdminOrders() {
                   Free
                 </span>
               </div>
+              {selectedOrder.regularDiscount > 0 && (
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-green-600">Product Discount</span>
+                  <span className="text-xs text-green-600 font-medium">
+                    −₹{selectedOrder.regularDiscount.toLocaleString()}
+                  </span>
+                </div>
+              )}
+              {selectedOrder.flashSaleDiscount > 0 && (
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-red-600 font-medium">Flash Sale Savings</span>
+                  <span className="text-xs text-red-600 font-medium">
+                    −₹{selectedOrder.flashSaleDiscount.toLocaleString()}
+                  </span>
+                </div>
+              )}
+              {selectedOrder.bundleDiscount > 0 && (
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-indigo-600 font-medium">Bundle Offer Savings</span>
+                  <span className="text-xs text-indigo-600 font-medium">
+                    −₹{selectedOrder.bundleDiscount.toLocaleString()}
+                  </span>
+                </div>
+              )}
               {selectedOrder.couponCode && (
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-green-600">

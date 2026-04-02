@@ -9,6 +9,12 @@ import {
   ShoppingBag,
   ArrowRight,
   Clock,
+  Truck,
+  CheckCircle2,
+  Clipboard,
+  PackageCheck,
+  CircleDot,
+  Download,
 } from "lucide-react";
 import { SkeletonOrderCard } from "../../components/SkeletonCard";
 
@@ -17,6 +23,25 @@ function MyOrders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const ORDER_STEPS = [
+    { key: "order placed", label: "Placed", icon: Package },
+    { key: "confirmed", label: "Confirmed", icon: Clipboard },
+    { key: "packed", label: "Packed", icon: PackageCheck },
+    { key: "shipped", label: "Shipped", icon: Truck },
+    { key: "out for delivery", label: "Out for Delivery", icon: CircleDot },
+    { key: "delivered", label: "Delivered", icon: CheckCircle2 },
+  ];
+
+  const statusColors = {
+    "order placed": "bg-yellow-50 text-yellow-700",
+    confirmed: "bg-blue-50 text-blue-700",
+    packed: "bg-violet-50 text-violet-700",
+    shipped: "bg-indigo-50 text-indigo-700",
+    "out for delivery": "bg-orange-50 text-orange-700",
+    delivered: "bg-emerald-50 text-emerald-700",
+    cancelled: "bg-red-50 text-red-600",
+  };
 
   async function getOrders() {
     try {
@@ -150,18 +175,60 @@ function MyOrders() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-semibold capitalize">
+                  <span className={`text-[11px] px-2.5 py-1 rounded-full font-semibold capitalize ${statusColors[order.status] || statusColors["order placed"]}`}>
                     {order.status}
                   </span>
-                  <button
-                    className="inline-flex items-center gap-1 text-xs font-medium text-red-400 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-all"
-                    onClick={() => cancelOrder(order._id)}
-                  >
-                    <XCircle className="h-3.5 w-3.5" />
-                    Cancel
-                  </button>
+                  {!["shipped", "out for delivery", "delivered", "cancelled"].includes(order.status) && (
+                    <button
+                      className="inline-flex items-center gap-1 text-xs font-medium text-red-400 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-all"
+                      onClick={() => cancelOrder(order._id)}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      Cancel
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* Step Tracker */}
+              {order.status !== "cancelled" && (
+                <div className="mb-4 px-1">
+                  <div className="flex items-center justify-between">
+                    {ORDER_STEPS.map((step, idx) => {
+                      const stepIdx = ORDER_STEPS.findIndex(s => s.key === order.status);
+                      const isCompleted = idx <= stepIdx;
+                      const isCurrent = idx === stepIdx;
+                      const Icon = step.icon;
+                      return (
+                        <React.Fragment key={step.key}>
+                          <div className="flex flex-col items-center gap-1" title={step.label}>
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                              isCompleted
+                                ? isCurrent ? "bg-store-primary text-white shadow-md" : "bg-store-primary text-white opacity-80"
+                                : "bg-gray-100 text-gray-300"
+                            }`}>
+                              <Icon className="h-3.5 w-3.5" />
+                            </div>
+                            <span className={`text-[9px] font-medium hidden sm:block ${
+                              isCompleted ? "text-gray-700" : "text-gray-300"
+                            }`}>{step.label}</span>
+                          </div>
+                          {idx < ORDER_STEPS.length - 1 && (
+                            <div className={`flex-1 h-0.5 mx-1 rounded-full transition-all ${
+                              idx < stepIdx ? "bg-store-primary/50" : "bg-gray-100"
+                            }`} />
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                  {order.estimatedDelivery && order.status !== "delivered" && (
+                    <p className="text-[10px] text-gray-400 text-center mt-2">
+                      Est. delivery: {new Date(order.estimatedDelivery).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Order Items */}
               <div className="divide-y divide-gray-50">
@@ -199,22 +266,77 @@ function MyOrders() {
                 ))}
               </div>
 
-              {/* Order Footer */}
-              <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-100 mt-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">
-                    {order.totalItems} {order.totalItems === 1 ? "item" : "items"}
+              {/* Order Footer - Detailed Price Breakdown */}
+              <div className="flex flex-col gap-1.5 pt-4 border-t border-dashed border-gray-100 mt-3 text-xs text-gray-500">
+                <div className="flex justify-between items-center">
+                  <span>Subtotal ({order.totalItems} {order.totalItems === 1 ? "item" : "items"})</span>
+                  <span className="font-semibold text-gray-700">
+                    <IndianRupee className="h-3 w-3 inline -mt-0.5" />
+                    {(order.subTotal || (order.totalAmount + (order.couponDiscount || 0) + (order.regularDiscount || 0) + (order.flashSaleDiscount || 0) + (order.bundleDiscount || 0))).toLocaleString()}
                   </span>
-                  {order.couponCode && (
-                    <span className="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-md font-semibold">
-                      {order.couponCode} (−₹{order.couponDiscount?.toLocaleString()})
-                    </span>
-                  )}
                 </div>
-                <div className="flex items-center gap-1 font-bold">
-                  <span className="text-gray-400 text-xs mr-1">Total:</span>
-                  <IndianRupee className="h-3.5 w-3.5" />
-                  <span className="text-base">{order.totalAmount?.toLocaleString()}</span>
+                {order.regularDiscount > 0 && (
+                  <div className="flex justify-between items-center text-green-600">
+                    <span>Product Discount</span>
+                    <span className="font-semibold">− <IndianRupee className="h-3 w-3 inline -mt-0.5" />{order.regularDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+                {order.flashSaleDiscount > 0 && (
+                  <div className="flex justify-between items-center text-red-600 font-medium">
+                    <span>Flash Sale Savings</span>
+                    <span className="font-semibold">− <IndianRupee className="h-3 w-3 inline -mt-0.5" />{order.flashSaleDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+                {order.bundleDiscount > 0 && (
+                  <div className="flex justify-between items-center text-indigo-600 font-medium">
+                    <span>Bundle Offer Savings</span>
+                    <span className="font-semibold">− <IndianRupee className="h-3 w-3 inline -mt-0.5" />{order.bundleDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+                {order.couponDiscount > 0 && (
+                  <div className="flex justify-between items-center text-green-600">
+                    <span>Coupon Applied {order.couponCode && `(${order.couponCode})`}</span>
+                    <span className="font-semibold">− <IndianRupee className="h-3 w-3 inline -mt-0.5" />{order.couponDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Final Actions & Total */}
+              <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-3">
+                <div className="flex items-center gap-2">
+                  {/* Left placeholder if needed */}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(
+                          `${process.env.REACT_APP_API_URL}/order/${order._id}/invoice`,
+                          { credentials: "include" }
+                        );
+                        if (!res.ok) throw new Error();
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `INV-${order._id.slice(-8).toUpperCase()}.pdf`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      } catch {
+                        toast.error("Failed to download invoice");
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 px-2.5 py-1.5 rounded-lg transition-all"
+                    title="Download Invoice"
+                  >
+                    <Download className="h-3 w-3" />
+                    Invoice
+                  </button>
+                  <div className="flex items-center gap-1 font-bold">
+                    <span className="text-gray-400 text-xs mr-1">Total:</span>
+                    <IndianRupee className="h-3.5 w-3.5" />
+                    <span className="text-base">{order.totalAmount?.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
             </div>

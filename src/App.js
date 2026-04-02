@@ -25,6 +25,9 @@ import AllProducts from "./pages/user/AllProducts";
 import Wishlist from "./pages/user/Wishlist";
 import NotFound from "./pages/user/NotFound";
 import SettingsProvider from "./context/SettingsProvider";
+import CompareProvider from "./context/CompareProvider";
+import { FlashSaleProvider } from "./context/FlashSaleProvider";
+import CompareProducts from "./pages/user/CompareProducts";
 
 // Admin imports
 import AdminRoute from "./pages/admin/AdminRoute";
@@ -37,6 +40,13 @@ import AdminActivityLog from "./pages/admin/AdminActivityLog";
 import AdminCustomerInsights from "./pages/admin/AdminCustomerInsights";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminReturns from "./pages/admin/AdminReturns";
+import AdminFlashSales from "./pages/admin/AdminFlashSales";
+import AdminBundles from "./pages/admin/AdminBundles";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminInventory from "./pages/admin/AdminInventory";
+import AdminBulk from "./pages/admin/AdminBulk";
+import AdminSegments from "./pages/admin/AdminSegments";
 
 const router = createBrowserRouter([
   {
@@ -110,6 +120,10 @@ const router = createBrowserRouter([
         element: <OrderConfirmation />
       },
       {
+        path: "compare",
+        element: <CompareProducts />
+      },
+      {
         path: "products",
         element: <AllProducts />
       },
@@ -132,6 +146,13 @@ const router = createBrowserRouter([
       { path: "activity-log", element: <AdminActivityLog /> },
       { path: "customers", element: <AdminCustomerInsights /> },
       { path: "coupons", element: <AdminCoupons /> },
+      { path: "returns", element: <AdminReturns /> },
+      { path: "flash-sales", element: <AdminFlashSales /> },
+      { path: "bundles", element: <AdminBundles /> },
+      { path: "analytics", element: <AdminAnalytics /> },
+      { path: "inventory", element: <AdminInventory /> },
+      { path: "bulk", element: <AdminBulk /> },
+      { path: "segments", element: <AdminSegments /> },
       { path: "settings", element: <AdminSettings /> },
     ],
   },
@@ -141,11 +162,15 @@ function App() {
   return (
     <>
       <AuthProvider>
-        <SettingsProvider>
-          <RouterProvider router={router} />
-          <Toaster richColors closeButton />
-        </SettingsProvider>
-      </AuthProvider>
+      <SettingsProvider>
+        <FlashSaleProvider>
+          <CompareProvider>
+            <Toaster position="top-right" />
+            <RouterProvider router={router} />
+          </CompareProvider>
+        </FlashSaleProvider>
+      </SettingsProvider>
+    </AuthProvider>
     </>
   );
 }

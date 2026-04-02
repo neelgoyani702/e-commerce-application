@@ -12,6 +12,13 @@ import {
   ArrowRight,
   Star,
   X,
+  Truck,
+  Clipboard,
+  PackageCheck,
+  CircleDot,
+  RefreshCcw,
+  RotateCcw,
+  Download,
 } from "lucide-react";
 import { SkeletonOrderCard } from "../../components/SkeletonCard";
 
@@ -28,6 +35,24 @@ function OrderHistory() {
   const [hoverRating, setHoverRating] = useState(0);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [existingReviews, setExistingReviews] = useState({}); // productId -> review
+  const [reordering, setReordering] = useState(null); // orderId being reordered
+
+  // Return state
+  const [returningOrder, setReturningOrder] = useState(null);
+  const [returnReason, setReturnReason] = useState("");
+  const [returnDetail, setReturnDetail] = useState("");
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+  const [returnStatusMap, setReturnStatusMap] = useState({}); // orderId -> { status, returnId }
+
+  const RETURN_REASONS = [
+    "Damaged product",
+    "Wrong item received",
+    "Item not as described",
+    "Quality not satisfactory",
+    "Size/fit issue",
+    "Changed my mind",
+    "Other",
+  ];
 
   async function getOrderHistory() {
     try {
@@ -130,12 +155,140 @@ function OrderHistory() {
     setHoverRating(0);
   }
 
+  async function handleReorder(orderId) {
+    try {
+      setReordering(orderId);
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/cart/reorder/${orderId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      if (response.ok && data.addedCount > 0) {
+        const warnings = data.results?.filter(r => r.status !== "added") || [];
+        if (warnings.length > 0) {
+          toast.success(data.message, {
+            description: warnings.map(w => `${w.name}: ${w.status}`).join(", "),
+          });
+        } else {
+          toast.success(data.message);
+        }
+        navigate("/checkout/cart");
+      } else {
+        toast.error(data.message || "Could not reorder");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setReordering(null);
+    }
+  }
+
+  async function handleReturnSubmit() {
+    if (!returningOrder || !returnReason) {
+      toast.error("Please select a reason");
+      return;
+    }
+    try {
+      setSubmittingReturn(true);
+      const items = returningOrder.products.map((p) => ({
+        productId: (p.productId._id || p.productId).toString(),
+        variantId: p.variantId?.toString() || undefined,
+        quantity: p.quantity,
+      }));
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/returns`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            orderId: returningOrder._id,
+            reason: returnReason,
+            reasonDetail: returnDetail,
+            items,
+          }),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || "Return request submitted");
+        setReturningOrder(null);
+        setReturnReason("");
+        setReturnDetail("");
+        setReturnStatusMap((prev) => ({ ...prev, [returningOrder._id]: { status: "pending", returnId: data.returnRequest._id } }));
+      } else {
+        toast.error(data.message || "Failed to submit return");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setSubmittingReturn(false);
+    }
+  }
+
+  async function fetchReturnStatuses() {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/returns`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      if (response.ok && data.returns) {
+        const map = {};
+        for (const ret of data.returns) {
+          const oid = ret.orderId?._id || ret.orderId;
+          map[oid] = { status: ret.status, returnId: ret._id };
+        }
+        setReturnStatusMap(map);
+      }
+    } catch {
+      // silent
+    }
+  }
+
+  async function handleCancelReturn(orderId, returnId) {
+    try {
+      const toastId = toast.loading("Cancelling return...");
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/returns/${returnId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      toast.dismiss(toastId);
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || "Return cancelled");
+        setReturnStatusMap((prev) => {
+          const copy = { ...prev };
+          delete copy[orderId];
+          return copy;
+        });
+      } else {
+        toast.error(data.message || "Failed to cancel return");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    }
+  }
+
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
     getOrderHistory();
+    fetchReturnStatuses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, navigate]);
 
@@ -146,10 +299,36 @@ function OrderHistory() {
       ? orders
       : orders.filter((o) => o.status === filter);
 
+  const ORDER_STEPS = [
+    { key: "order placed", label: "Placed", icon: Package },
+    { key: "confirmed", label: "Confirmed", icon: Clipboard },
+    { key: "packed", label: "Packed", icon: PackageCheck },
+    { key: "shipped", label: "Shipped", icon: Truck },
+    { key: "out for delivery", label: "Out for Delivery", icon: CircleDot },
+    { key: "delivered", label: "Delivered", icon: CheckCircle2 },
+    { key: "returned", label: "Returned", icon: RotateCcw },
+  ];
+
   const statusConfig = {
     "order placed": {
-      color: "bg-store-primary-light text-store-primary-dark",
+      color: "bg-yellow-50 text-yellow-700",
       icon: Package,
+    },
+    confirmed: {
+      color: "bg-blue-50 text-blue-700",
+      icon: Clipboard,
+    },
+    packed: {
+      color: "bg-violet-50 text-violet-700",
+      icon: PackageCheck,
+    },
+    shipped: {
+      color: "bg-indigo-50 text-indigo-700",
+      icon: Truck,
+    },
+    "out for delivery": {
+      color: "bg-orange-50 text-orange-700",
+      icon: CircleDot,
     },
     delivered: {
       color: "bg-emerald-50 text-emerald-700",
@@ -164,6 +343,10 @@ function OrderHistory() {
   const statusCounts = {
     all: orders.length,
     "order placed": orders.filter((o) => o.status === "order placed").length,
+    confirmed: orders.filter((o) => o.status === "confirmed").length,
+    packed: orders.filter((o) => o.status === "packed").length,
+    shipped: orders.filter((o) => o.status === "shipped").length,
+    "out for delivery": orders.filter((o) => o.status === "out for delivery").length,
     delivered: orders.filter((o) => o.status === "delivered").length,
     cancelled: orders.filter((o) => o.status === "cancelled").length,
   };
@@ -190,7 +373,11 @@ function OrderHistory() {
         <div className="flex flex-wrap gap-2 mb-6">
           {[
             { key: "all", label: "All" },
-            { key: "order placed", label: "Active" },
+            { key: "order placed", label: "Placed" },
+            { key: "confirmed", label: "Confirmed" },
+            { key: "packed", label: "Packed" },
+            { key: "shipped", label: "Shipped" },
+            { key: "out for delivery", label: "Out for Delivery" },
             { key: "delivered", label: "Delivered" },
             { key: "cancelled", label: "Cancelled" },
           ].map((tab) => (
@@ -296,6 +483,48 @@ function OrderHistory() {
                     {order.status}
                   </span>
                 </div>
+
+                {/* Step Tracker */}
+                {order.status !== "cancelled" && (
+                  <div className="mb-4 px-1">
+                    <div className="flex items-center justify-between">
+                      {(() => {
+                        const retInfo = returnStatusMap[order._id];
+                        const isReturned = retInfo && (retInfo.status === "approved" || retInfo.status === "refunded");
+                        const stepsToShow = isReturned ? ORDER_STEPS : ORDER_STEPS.filter(s => s.key !== "returned");
+                        const effectiveStatus = isReturned ? "returned" : order.status;
+
+                        return stepsToShow.map((step, idx) => {
+                          const stepIdx = stepsToShow.findIndex(s => s.key === effectiveStatus);
+                          const isCompleted = idx <= stepIdx;
+                          const isCurrent = idx === stepIdx;
+                          const StepIcon = step.icon;
+                          return (
+                            <React.Fragment key={step.key}>
+                              <div className="flex flex-col items-center gap-1" title={step.label}>
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                  isCompleted
+                                    ? isCurrent ? "bg-store-primary text-white shadow-md" : "bg-store-primary text-white opacity-80"
+                                    : "bg-gray-100 text-gray-300"
+                                }`}>
+                                  <StepIcon className="h-3.5 w-3.5" />
+                                </div>
+                                <span className={`text-[9px] font-medium hidden sm:block ${
+                                  isCompleted ? "text-gray-700" : "text-gray-300"
+                                }`}>{step.label}</span>
+                              </div>
+                              {idx < stepsToShow.length - 1 && (
+                                <div className={`flex-1 h-0.5 mx-1 rounded-full transition-all ${
+                                  idx < stepIdx ? "bg-store-primary/50" : "bg-gray-100"
+                                }`} />
+                              )}
+                            </React.Fragment>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+                )}
 
                 {/* Order Items */}
                 <div className="divide-y divide-gray-50">
@@ -447,32 +676,215 @@ function OrderHistory() {
                   })}
                 </div>
 
-                {/* Order Footer */}
-                <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-100 mt-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">
-                      {order.totalItems}{" "}
-                      {order.totalItems === 1 ? "item" : "items"}
+                {/* Order Footer - Detailed Price Breakdown */}
+                <div className="flex flex-col gap-1.5 pt-4 border-t border-dashed border-gray-100 mt-3 text-xs text-gray-500">
+                  <div className="flex justify-between items-center">
+                    <span>Subtotal ({order.totalItems} {order.totalItems === 1 ? "item" : "items"})</span>
+                    <span className="font-semibold text-gray-700">
+                      <IndianRupee className="h-3 w-3 inline -mt-0.5" />
+                      {(order.subTotal || (order.totalAmount + (order.couponDiscount || 0) + (order.regularDiscount || 0) + (order.flashSaleDiscount || 0) + (order.bundleDiscount || 0))).toLocaleString()}
                     </span>
-                    {order.couponCode && (
-                      <span className="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-md font-semibold">
-                        {order.couponCode} (−₹{order.couponDiscount?.toLocaleString()})
-                      </span>
-                    )}
                   </div>
-                  <div className="flex items-center gap-1 font-bold">
-                    <span className="text-gray-400 text-xs mr-1">
-                      Total:
-                    </span>
-                    <IndianRupee className="h-3.5 w-3.5" />
-                    <span className="text-base">
-                      {order.totalAmount?.toLocaleString()}
-                    </span>
+                  {order.regularDiscount > 0 && (
+                    <div className="flex justify-between items-center text-green-600">
+                      <span>Product Discount</span>
+                      <span className="font-semibold">− <IndianRupee className="h-3 w-3 inline -mt-0.5" />{order.regularDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {order.flashSaleDiscount > 0 && (
+                    <div className="flex justify-between items-center text-red-600 font-medium">
+                      <span>Flash Sale Savings</span>
+                      <span className="font-semibold">− <IndianRupee className="h-3 w-3 inline -mt-0.5" />{order.flashSaleDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {order.bundleDiscount > 0 && (
+                    <div className="flex justify-between items-center text-indigo-600 font-medium">
+                      <span>Bundle Offer Savings</span>
+                      <span className="font-semibold">− <IndianRupee className="h-3 w-3 inline -mt-0.5" />{order.bundleDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {order.couponDiscount > 0 && (
+                    <div className="flex justify-between items-center text-green-600">
+                      <span>Coupon Applied {order.couponCode && `(${order.couponCode})`}</span>
+                      <span className="font-semibold">− <IndianRupee className="h-3 w-3 inline -mt-0.5" />{order.couponDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Final Actions & Total */}
+                <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-3">
+                  <div className="flex items-center gap-2">
+                    {/* Placeholder for left side if needed */}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {isDelivered && (
+                      <button
+                        onClick={() => handleReorder(order._id)}
+                        disabled={reordering === order._id}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-store-primary bg-store-primary-light hover:bg-store-primary/10 px-3 py-1.5 rounded-lg transition-all disabled:opacity-50"
+                      >
+                        <RefreshCcw className={`h-3 w-3 ${reordering === order._id ? "animate-spin" : ""}`} />
+                        {reordering === order._id ? "Adding..." : "Buy Again"}
+                      </button>
+                    )}
+                    {isDelivered && (() => {
+                      const retInfo = returnStatusMap[order._id];
+                      if (retInfo) {
+                        const statusColors = {
+                          pending: "text-yellow-600 bg-yellow-50",
+                          approved: "text-blue-600 bg-blue-50",
+                          rejected: "text-red-500 bg-red-50",
+                          refunded: "text-emerald-600 bg-emerald-50",
+                        };
+                        return (
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg capitalize ${statusColors[retInfo.status] || "text-gray-500 bg-gray-50"}`}>
+                              <RotateCcw className="h-3 w-3" />
+                              Return {retInfo.status}
+                            </span>
+                            {retInfo.status === "pending" && (
+                              <button
+                                onClick={() => handleCancelReturn(order._id, retInfo.returnId)}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-500 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-all"
+                              >
+                                <X className="h-3 w-3" />
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        );
+                      }
+                      return (
+                        <button
+                          onClick={() => {
+                            setReturningOrder(order);
+                            setReturnReason("");
+                            setReturnDetail("");
+                          }}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Return
+                        </button>
+                      );
+                    })()}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            `${process.env.REACT_APP_API_URL}/order/${order._id}/invoice`,
+                            { credentials: "include" }
+                          );
+                          if (!res.ok) throw new Error();
+                          const blob = await res.blob();
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `INV-${order._id.slice(-8).toUpperCase()}.pdf`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        } catch {
+                          toast.error("Failed to download invoice");
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 px-2.5 py-1.5 rounded-lg transition-all"
+                      title="Download Invoice"
+                    >
+                      <Download className="h-3 w-3" />
+                      Invoice
+                    </button>
+                    <div className="flex items-center gap-1 font-bold">
+                      <span className="text-gray-400 text-xs mr-1">
+                        Total:
+                      </span>
+                      <IndianRupee className="h-3.5 w-3.5" />
+                      <span className="text-base">
+                        {order.totalAmount?.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Return Request Modal */}
+      {returningOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setReturningOrder(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-fade-in-up">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
+                  <RotateCcw className="h-4 w-4 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Request Return</h3>
+                  <p className="text-[11px] text-gray-400">Order #{returningOrder._id.slice(-8).toUpperCase()}</p>
+                </div>
+              </div>
+              <button onClick={() => setReturningOrder(null)} className="p-1 hover:bg-gray-100 rounded-lg">
+                <X className="h-4 w-4 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Reason *</label>
+                <select
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-store-primary focus:border-store-primary"
+                >
+                  <option value="">Select a reason...</option>
+                  {RETURN_REASONS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Additional Details</label>
+                <textarea
+                  value={returnDetail}
+                  onChange={(e) => setReturnDetail(e.target.value)}
+                  placeholder="Describe the issue in detail..."
+                  rows={3}
+                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-store-primary focus:border-store-primary"
+                />
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Items to Return</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {returningOrder.products?.map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                      <img
+                        className="h-10 w-10 rounded-lg object-cover"
+                        src={item.productId?.image}
+                        alt={item.productId?.name || ""}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-700 truncate">{item.productId?.name}</p>
+                        {item.variantLabel && <p className="text-[10px] text-gray-400">{item.variantLabel}</p>}
+                        <p className="text-[10px] text-gray-400">Qty: {item.quantity}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleReturnSubmit}
+                disabled={!returnReason || submittingReturn}
+                className="w-full py-3 bg-store-gradient text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submittingReturn ? "Submitting..." : "Submit Return Request"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

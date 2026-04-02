@@ -508,7 +508,7 @@ function AdminDashboard() {
               </span>
             </div>
             <button
-              onClick={() => navigate("/admin/products")}
+              onClick={() => navigate("/admin/inventory")}
               className="text-[11px] text-indigo-600 font-semibold hover:text-indigo-500 transition-colors"
             >
               Manage →

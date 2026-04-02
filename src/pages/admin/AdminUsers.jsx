@@ -1,17 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Users, Search, Shield, ShieldOff } from "lucide-react";
+import { Users, Search, Shield, ShieldOff, Crown, AlertTriangle, UserPlus, TrendingUp } from "lucide-react";
+
+const SEGMENT_BADGES = {
+  vip: { label: "VIP", className: "bg-amber-50 text-amber-700", icon: Crown },
+  regular: { label: "Regular", className: "bg-emerald-50 text-emerald-700", icon: TrendingUp },
+  atRisk: { label: "At-Risk", className: "bg-red-50 text-red-600", icon: AlertTriangle },
+  new: { label: "New", className: "bg-sky-50 text-sky-700", icon: UserPlus },
+};
 
 function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  // Map userId → segment string
+  const [segmentMap, setSegmentMap] = useState({});
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  async function fetchUsers() {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/admin/users`,
@@ -32,16 +37,35 @@ function AdminUsers() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  const fetchSegments = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/admin/customers/segments`,
+        { method: "GET", credentials: "include" }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        const map = {};
+        for (const [seg, customers] of Object.entries(data.segments || {})) {
+          for (const c of customers) {
+            map[c._id] = seg;
+          }
+        }
+        setSegmentMap(map);
+      }
+    } catch { /* silent — segment badges are a bonus */ }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+    fetchSegments();
+  }, [fetchUsers, fetchSegments]);
 
   async function toggleRole(userId, currentRole) {
     const newRole = currentRole === "admin" ? "user" : "admin";
-    if (
-      !window.confirm(
-        `Change this user's role to "${newRole}"?`
-      )
-    )
-      return;
+    if (!window.confirm(`Change this user's role to "${newRole}"?`)) return;
 
     try {
       const toastId = toast.loading("Updating role...");
@@ -58,11 +82,7 @@ function AdminUsers() {
       const data = await response.json();
       if (response.ok) {
         toast.success(data.message || "Role updated");
-        setUsers(
-          users.map((u) =>
-            u._id === userId ? { ...u, role: newRole } : u
-          )
-        );
+        setUsers(users.map((u) => u._id === userId ? { ...u, role: newRole } : u));
       } else {
         toast.error(data.message || "Failed to update role");
       }
@@ -89,7 +109,7 @@ function AdminUsers() {
           {[...Array(6)].map((_, r) => (
             <div key={r} className="flex gap-4 px-5 py-4 border-b border-gray-50 items-center">
               <div className="h-9 w-9 bg-gray-100 rounded-full flex-shrink-0" />
-              {[...Array(4)].map((_, c) => <div key={c} className={`h-3 rounded flex-1 ${c === 0 ? 'bg-gray-100' : 'bg-gray-50'}`} />)}
+              {[...Array(5)].map((_, c) => <div key={c} className={`h-3 rounded flex-1 ${c === 0 ? 'bg-gray-100' : 'bg-gray-50'}`} />)}
             </div>
           ))}
         </div>
@@ -136,67 +156,69 @@ function AdminUsers() {
                 <tr className="text-left text-[11px] text-gray-400 font-semibold uppercase tracking-wider bg-gray-50/50">
                   <th className="px-5 py-3">User</th>
                   <th className="px-5 py-3">Email</th>
+                  <th className="px-5 py-3">Segment</th>
                   <th className="px-5 py-3">Role</th>
                   <th className="px-5 py-3">Joined</th>
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filtered.map((u) => (
-                  <tr
-                    key={u._id}
-                    className="hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={u.image}
-                          alt={u.firstName}
-                          className="w-8 h-8 rounded-full object-cover bg-gray-100"
-                        />
-                        <span className="text-xs font-bold text-gray-900">
-                          {u.firstName} {u.lastName}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-xs text-gray-500">
-                      {u.email}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize ${u.role === "admin"
-                          ? "bg-indigo-50 text-indigo-700"
-                          : "bg-gray-100 text-gray-600"
-                          }`}
-                      >
-                        {u.role === "admin" ? (
-                          <Shield className="h-3 w-3" />
+                {filtered.map((u) => {
+                  const segKey = segmentMap[u._id];
+                  const badge = segKey ? SEGMENT_BADGES[segKey] : null;
+                  const BadgeIcon = badge?.icon;
+                  return (
+                    <tr key={u._id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={u.image}
+                            alt={u.firstName}
+                            className="w-8 h-8 rounded-full object-cover bg-gray-100"
+                          />
+                          <span className="text-xs font-bold text-gray-900">
+                            {u.firstName} {u.lastName}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-xs text-gray-500">{u.email}</td>
+                      <td className="px-5 py-3">
+                        {badge ? (
+                          <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold ${badge.className}`}>
+                            <BadgeIcon className="h-3 w-3" />
+                            {badge.label}
+                          </span>
                         ) : (
-                          <ShieldOff className="h-3 w-3" />
+                          <span className="text-[10px] text-gray-300">—</span>
                         )}
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-[11px] text-gray-400">
-                      {new Date(u.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={() => toggleRole(u._id, u.role)}
-                        className={`text-[11px] font-semibold px-3 py-1 rounded-lg transition-colors ${u.role === "admin"
-                          ? "text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
-                          : "text-indigo-600 hover:text-indigo-500 bg-indigo-50 hover:bg-indigo-100"
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize ${u.role === "admin" ? "bg-indigo-50 text-indigo-700" : "bg-gray-100 text-gray-600"}`}>
+                          {u.role === "admin" ? <Shield className="h-3 w-3" /> : <ShieldOff className="h-3 w-3" />}
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-[11px] text-gray-400">
+                        {new Date(u.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          onClick={() => toggleRole(u._id, u.role)}
+                          className={`text-[11px] font-semibold px-3 py-1 rounded-lg transition-colors ${u.role === "admin"
+                            ? "text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
+                            : "text-indigo-600 hover:text-indigo-500 bg-indigo-50 hover:bg-indigo-100"
                           }`}
-                      >
-                        {u.role === "admin" ? "Make User" : "Make Admin"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                        >
+                          {u.role === "admin" ? "Make User" : "Make Admin"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
