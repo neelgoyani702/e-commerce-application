@@ -1,0 +1,232 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+
+/* Store Theme Utilities - use admin-configured colors */
+.text-store-primary {
+  color: var(--store-primary, #eab308);
+}
+
+.text-store-accent {
+  color: var(--store-accent, #7c3aed);
+}
+
+.bg-store-primary {
+  background-color: var(--store-primary, #eab308);
+}
+
+.bg-store-accent {
+  background-color: var(--store-accent, #7c3aed);
+}
+
+.border-store-primary {
+  border-color: var(--store-primary, #eab308);
+}
+
+/* Hover states */
+.hover\:text-store-primary:hover {
+  color: var(--store-primary, #eab308);
+}
+
+.hover\:border-store-primary:hover {
+  border-color: var(--store-primary, #eab308);
+}
+
+/* Opacity backgrounds */
+.bg-store-primary\/5 {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 5%, transparent);
+}
+
+.bg-store-primary\/10 {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 10%, transparent);
+}
+
+.bg-store-primary\/20 {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 20%, transparent);
+}
+
+.bg-store-primary\/50 {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 50%, transparent);
+}
+
+/* Light bg for icons/badges */
+.bg-store-primary-light {
+  background-color: color-mix(in srgb, var(--store-primary, #eab308) 10%, white);
+}
+
+/* Text with opacity */
+.text-store-primary-dark {
+  color: color-mix(in srgb, var(--store-primary, #eab308) 80%, black);
+}
+
+/* Gradient button */
+.bg-store-gradient {
+  background: linear-gradient(to right, var(--store-primary, #eab308), var(--store-accent, #f59e0b));
+}
+
+.hover\:bg-store-gradient-light:hover {
+  background: linear-gradient(to right, color-mix(in srgb, var(--store-primary, #eab308) 85%, white), color-mix(in srgb, var(--store-accent, #f59e0b) 85%, white));
+}
+
+.shadow-store-primary {
+  box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--store-primary, #eab308) 25%, transparent);
+}
+
+.shadow-store-primary-lg {
+  box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--store-primary, #eab308) 40%, transparent);
+}
+
+/* Focus ring */
+.focus\:ring-store-primary:focus {
+  --tw-ring-color: color-mix(in srgb, var(--store-primary, #eab308) 30%, transparent);
+}
+
+.focus\:border-store-primary:focus {
+  border-color: color-mix(in srgb, var(--store-primary, #eab308) 50%, transparent);
+}
+
+/* Spinner */
+.border-store-primary-spinner {
+  border-color: var(--store-primary, #eab308);
+  border-top-color: transparent;
+}
+
+/* SVG fill */
+.fill-store-primary {
+  fill: var(--store-primary, #eab308);
+}

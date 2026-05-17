@@ -1,0 +1,60 @@
+import React from 'react'
+import { Button } from './ui/button'
+import { toast } from 'sonner';
+
+function AddToCart(props) {
+
+    const { product, quantity, ATC, handleChangeCartItems, variantId } = props;
+
+    const addToCart = async () => {
+        try {
+            const toastId = toast.loading("Adding to cart...");
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/cart`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    productId: product._id,
+                    quantity: quantity || 1,
+                    ATC: ATC || false,
+                    variantId: variantId || undefined,
+                })
+            });
+            toast.dismiss(toastId);
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                toast.error(data.message || "Failed to add to cart");
+                return;
+            }
+
+            if (data.cart) {
+                if (data.stockCapped) {
+                    toast.warning(data.message);
+                } else {
+                    toast.success(data.message || "Product added to cart");
+                }
+                if (!ATC && handleChangeCartItems) {
+                    handleChangeCartItems(product, quantity);
+                }
+            }
+        } catch (error) {
+            console.error("Error adding to cart:", error);
+            toast.error("Something went wrong");
+        }
+    }
+
+    return (
+        <Button
+            asChild
+            onClick={addToCart}
+        >
+            {props.children}
+        </Button>
+    )
+}
+
+export default AddToCart
