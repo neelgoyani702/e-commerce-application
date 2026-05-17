@@ -1,11 +1,12 @@
 name: Frontend CI/CD
 
 on:
-  push:
-    branches: [develop, staging, main]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/deploy-frontend.yml"
+  # push:
+  #   branches: [develop, staging, main]
+  #   paths:
+  #     - "frontend/**"
+  #     - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
 
 permissions:
   id-token: write

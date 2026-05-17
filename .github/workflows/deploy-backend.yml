@@ -1,11 +1,12 @@
 name: Backend CI/CD
 
 on:
-  push:
-    branches: [develop, staging, main]
-    paths:
-      - "backend/**"
-      - ".github/workflows/deploy-backend.yml"
+  # push:
+  #   branches: [develop, staging, main]
+  #   paths:
+  #     - "backend/**"
+  #     - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
 
 # Required for GitHub OIDC token exchange — no static AWS credentials stored
 permissions:
