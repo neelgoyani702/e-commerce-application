@@ -52,7 +52,9 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173"],
+    origin: process.env.CLIENT_URL
+      ? process.env.CLIENT_URL.split(",").map((u) => u.trim())
+      : ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173"],
     credentials: true,
   })
 );
@@ -67,6 +69,10 @@ app.use(
 app.use(mongoSanitize());
 
 app.use(express.static("uploads"));
+
+// ── Health Check ──────────────────────────────────────────
+// Required by ALB — must respond before any auth/rate-limit middleware
+app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
 
 // ── Routes ────────────────────────────────────────────────
 app.use("/auth", authLimiter, authRoute);

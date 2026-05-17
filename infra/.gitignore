@@ -1,0 +1,15 @@
+# Terraform state and cache — never commit these
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# terraform.tfvars may contain sensitive values — use .tfvars.example instead
+# Uncomment the line below if your tfvars contain real secrets
+# **/*.tfvars

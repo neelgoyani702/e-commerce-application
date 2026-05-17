@@ -34,7 +34,7 @@ const createUser = async (req, res) => {
 
     const options = {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24, // 24 hours
       sameSite: "strict",
     };
@@ -98,7 +98,7 @@ const logoutUser = async (req, res) => {
   try {
     const options = {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
     };
 
     return res
